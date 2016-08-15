@@ -123,6 +123,15 @@ trait ConverterRules {
 
   def parseDouble(messages: Messages): Rule[String, Double] =
     pure(value => util.Try(value.toDouble).toOption.map(Ior.right).getOrElse(Ior.left(messages)))
+
+  def mapValue[A: PathPrefix, B](key: A): Rule[Map[A, B], B] =
+    mapValue[A, B](key, errors(s"Value not found"))
+
+  def mapValue[A: PathPrefix, B](key: A, messages: Messages): Rule[Map[A, B], B] =
+    pure(map => map.get(key).map(Ior.right).getOrElse(Ior.left(messages map (_ prefix key))))
+
+  val trimString: Rule[String, String] =
+    pure(value => Ior.right(value.trim))
 }
 
 /** Rules that test a property of an existing value. */
