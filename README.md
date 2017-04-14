@@ -3,7 +3,9 @@
 Library for reading and validating data, with support for hard and soft constraints.
 Pre-alpha. Not ready for use.
 
-Copyright 2016 Dave Gurnell. Licensed [Apache 2][license].
+Copyright 2016-17 Dave Gurnell. Licensed [Apache 2][license].
+
+[license]: http://www.apache.org/licenses/LICENSE-2.0
 
 ## Synopsis
 
@@ -282,5 +284,3 @@ checkPerson(Person("", 0, Address(0, "")))
 checkPerson(Person("Eric Wimp", 11, Address(29, "Acacia Road")))
 // res9: checklist.Checked[Person] = Right(Person(Eric Wimp,11,Address(29,Acacia Road)))
 ~~~
-
-[license]: http://www.apache.org/licenses/LICENSE-2.0
