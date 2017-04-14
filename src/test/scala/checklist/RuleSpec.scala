@@ -43,9 +43,42 @@ class ConverterRulesSpec extends FreeSpec with Matchers {
     rule("123")   should be(Ior.right(123.0))
     rule("123.4") should be(Ior.right(123.4))
   }
+
+  "mapValue" - {
+    "string keys" in {
+      val rule = mapValue[String, String]("foo")
+      rule(Map.empty) should be(Ior.left(errors("foo" -> "Value not found")))
+      rule(Map("foo" -> "bar")) should be(Ior.right("bar"))
+      rule(Map("baz" -> "bar")) should be(Ior.left(errors("foo" -> "Value not found")))
+    }
+
+    "int keys" in {
+      val rule = mapValue[Int, String](123)
+      rule(Map.empty) should be(Ior.left(errors(123 -> "Value not found")))
+      rule(Map(123 -> "bar")) should be(Ior.right("bar"))
+      rule(Map(456 -> "bar")) should be(Ior.left(errors(123 -> "Value not found")))
+    }
+  }
+
+  "trimString" in {
+    val rule = trimString
+    rule("") should be(Ior.right(""))
+    rule("foo") should be(Ior.right("foo"))
+    rule(" foo ") should be(Ior.right("foo"))
+  }
 }
 
 class PropertyRulesSpec extends FreeSpec with Matchers {
+  "seq" in {
+    import cats.instances.list._
+    val rule = eql("ok").seq[List]
+    rule(Nil) should be(Ior.right(Nil))
+    rule(List("ok", "ok")) should be(Ior.right(List("ok", "ok")))
+    rule(List("ko", "ok")) should be(Ior.both(errors(0 -> "Must be ok"), List("ko", "ok")))
+    rule(List("ok", "ko")) should be(Ior.both(errors(1 -> "Must be ok"), List("ok", "ko")))
+    rule(List("ko", "ko")) should be(Ior.both(errors(0 -> "Must be ok", 1 -> "Must be ok"), List("ko", "ko")))
+  }
+
   "opt" in {
     val rule = eql("ok").opt
     rule(None)       should be(Ior.right(None))

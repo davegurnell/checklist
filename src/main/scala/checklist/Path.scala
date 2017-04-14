@@ -2,12 +2,23 @@ package checklist
 
 sealed abstract class Path {
   def pathString: String = this match {
-    case PNil => ""
-    case PField(head, tail: PField) => s"$head.${tail.pathString}"
-    case PField(head, tail)         => s"$head${tail.pathString}"
-    case PIndex(head, tail: PField) => s"[$head.${tail.pathString}]"
-    case PIndex(head, tail)         => s"[$head${tail.pathString}]"
+    case PNil               => ""
+    case PField(head, PNil) => s"$head"
+    case PField(head, tail) => s"$head/${tail.pathString}"
+    case PIndex(head, PNil) => s"$head"
+    case PIndex(head, tail) => s"$head/${tail.pathString}"
   }
+
+  // TODO: Move this and the old `ValidationPath.unapply` method
+  // to a separate `js` package:
+
+  // def jsString: String = this match {
+  //   case PNil                       => ""
+  //   case PField(head, tail: PField) => s"$head.${tail.jsString}"
+  //   case PField(head, tail)         => s"$head${tail.jsString}"
+  //   case PIndex(head, tail: PField) => s"[$head.${tail.jsString}]"
+  //   case PIndex(head, tail)         => s"[$head${tail.jsString}]"
+  // }
 
   def prefix[A](prefix: A)(implicit format: PathPrefix[A]) =
     format.prefix(prefix, this)

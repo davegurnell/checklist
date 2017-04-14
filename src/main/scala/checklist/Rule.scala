@@ -49,11 +49,16 @@ sealed abstract class Rule[A, B] {
       }
     }
 
-  // def and[C](that: Rule[A, B]): Rule[A, B] =
-  //   (this zip that) map (_._1)
+  def seq[S[_] : Indexable : Traverse]: Rule[S[A], S[B]] =
+    Rule.pure { values =>
+      val results: S[Checked[B]] =
+        Indexable[S].zipWithIndex(values).map {
+          case (value, index) =>
+            this(value) leftMap (_ map (_ prefix index))
+        }
 
-  def seq[S[_]: Traverse]: Rule[S[A], S[B]] =
-    Rule.pure(value => value.map(this.apply).sequence)
+      results.sequence
+    }
 
   def opt: Rule[Option[A], Option[B]] =
     Rule.pure {
@@ -115,6 +120,15 @@ trait ConverterRules {
 
   def parseDouble(messages: Messages): Rule[String, Double] =
     pure(value => util.Try(value.toDouble).toOption.map(Ior.right).getOrElse(Ior.left(messages)))
+
+  def mapValue[A: PathPrefix, B](key: A): Rule[Map[A, B], B] =
+    mapValue[A, B](key, errors(s"Value not found"))
+
+  def mapValue[A: PathPrefix, B](key: A, messages: Messages): Rule[Map[A, B], B] =
+    pure(map => map.get(key).map(Ior.right).getOrElse(Ior.left(messages map (_ prefix key))))
+
+  val trimString: Rule[String, String] =
+    pure(value => Ior.right(value.trim))
 }
 
 /** Rules that test a property of an existing value. */
