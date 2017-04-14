@@ -11,6 +11,18 @@ Copyright 2016-17 Dave Gurnell. Licensed [Apache 2][license].
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
+## Getting It
+
+Add one of the following to your `build.sbt`:
+
+```scala
+// For regular Scala projects:
+libraryDependencies += "com.davegurnell" %% "checklist" % "<<VERSION>>"
+
+// For ScalaJS projects:
+libraryDependencies += "com.davegurnell" %%% "checklist" % "<<VERSION>>"
+```
+
 ## Synopsis
 
 Checklist is a library for validating data in applications and inputs to applications.
