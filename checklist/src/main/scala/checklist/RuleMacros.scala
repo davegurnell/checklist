@@ -2,9 +2,9 @@ package checklist
 
 import scala.language.experimental.macros
 import scala.language.higherKinds
-import scala.reflect.macros.blackbox.Context
+import scala.reflect.macros.blackbox
 
-class RuleMacros(val c: Context) {
+class RuleMacros(val c: blackbox.Context) {
   import c.universe._
 
   def field[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(rule: c.Tree): c.Tree = {
@@ -25,10 +25,11 @@ class RuleMacros(val c: Context) {
     q"${c.prefix}.fieldWith($path, $lens)($builder)"
   }
 
-  private def accessorName(accessor: c.Tree) = accessor match {
-    case q"($param) => $obj.$name" => name
-    case other => c.abort(c.enclosingPosition, errorMessage(s"Argument is not an accessor function literal."))
-  }
+  private def accessorName(accessor: c.Tree) =
+    accessor match {
+      case q"($param) => $obj.$name" => name
+      case other => c.abort(c.enclosingPosition, errorMessage(s"Argument is not an accessor function literal."))
+    }
 
   private def errorMessage(prefix: String) =
     s"""
