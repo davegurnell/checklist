@@ -5,6 +5,10 @@ Pre-alpha. Not ready for use.
 
 Copyright 2016-17 Dave Gurnell. Licensed [Apache 2][license].
 
+[![Build Status](https://travis-ci.org/davegurnell/checklist.svg?branch=develop)](https://travis-ci.org/davegurnell/checklist)
+[![Coverage status](https://img.shields.io/codecov/c/github/davegurnell/checklist/develop.svg)](https://codecov.io/github/davegurnell/checklist)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.davegurnell/checklist_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.davegurnell/checklist_2.11)
+
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
 ## Synopsis
