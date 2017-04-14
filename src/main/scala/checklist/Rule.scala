@@ -49,9 +49,6 @@ sealed abstract class Rule[A, B] {
       }
     }
 
-  // def and[C](that: Rule[A, B]): Rule[A, B] =
-  //   (this zip that) map (_._1)
-
   def seq[S[_] : Indexable : Traverse]: Rule[S[A], S[B]] =
     Rule.pure { values =>
       val results: S[Checked[B]] =
