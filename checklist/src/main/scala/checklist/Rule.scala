@@ -2,10 +2,9 @@ package checklist
 
 import cats.{Applicative, Traverse}
 import cats.data.Ior
-import cats.syntax.functor._
-import cats.syntax.traverse._
+import cats.instances.all._
+import cats.syntax.all._
 import monocle.{PLens, Lens}
-import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.util.matching.Regex
 import Message.{errors, warnings}
@@ -31,49 +30,32 @@ sealed abstract class Rule[A, B] {
         case Ior.Left(msg1) =>
           that(a) match {
             case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Right(c)      => Ior.left(msg1)
             case Ior.Both(msg2, c) => Ior.left(msg1 concat msg2)
-          }
-        case Ior.Right(b) =>
-          that(a) match {
-            case Ior.Left(msg2)    => Ior.left(msg2)
-            case Ior.Right(c)      => Ior.right((b, c))
-            case Ior.Both(msg2, c) => Ior.both(msg2, (b, c))
+            case Ior.Right(c)      => Ior.left(msg1)
           }
         case Ior.Both(msg1, b) =>
           that(a) match {
             case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Right(c)      => Ior.both(msg1, (b, c))
             case Ior.Both(msg2, c) => Ior.both(msg1 concat msg2, (b, c))
+            case Ior.Right(c)      => Ior.both(msg1, (b, c))
+          }
+        case Ior.Right(b) =>
+          that(a) match {
+            case Ior.Left(msg2)    => Ior.left(msg2)
+            case Ior.Both(msg2, c) => Ior.both(msg2, (b, c))
+            case Ior.Right(c)      => Ior.right((b, c))
           }
       }
     }
 
-  def seq[S[_] : Indexable : Traverse]: Rule[S[A], S[B]] =
-    Rule.pure { values =>
-      val results: S[Checked[B]] =
-        Indexable[S].zipWithIndex(values).map {
-          case (value, index) =>
-            this(value) leftMap (_ map (_ prefix index))
-        }
-
-      results.sequence
-    }
+  def seq[S[_]: Indexable: Traverse]: Rule[S[A], S[B]] =
+    Rule.sequence(this)
 
   def opt: Rule[Option[A], Option[B]] =
-    Rule.pure {
-      case Some(value) => this(value) map (Some(_))
-      case None        => Ior.right(None)
-    }
+    Rule.optional(this)
 
   def req: Rule[Option[A], B] =
-    req(errors("Value is required"))
-
-  def req(messages: Messages): Rule[Option[A], B] =
-    Rule.pure {
-      case Some(value) => this(value)
-      case None        => Ior.left(messages)
-    }
+    Rule.required(this)
 
   def prefix[P: PathPrefix](prefix: P): Rule[A, B] =
     Rule.pure(value => this(value) leftMap (_ map (_ prefix prefix)))
@@ -88,10 +70,14 @@ sealed abstract class Rule[A, B] {
 object Rule extends BaseRules
   with ConverterRules
   with PropertyRules
+  with CollectionRules
   with RuleInstances
   with Rule1Syntax
 
 trait BaseRules {
+  def apply[A]: Rule[A, A] =
+    pure(Ior.right)
+
   def pure[A, B](func: A => Checked[B]): Rule[A, B] =
     new Rule[A, B] {
       def apply(value: A) =
@@ -120,12 +106,6 @@ trait ConverterRules {
 
   def parseDouble(messages: Messages): Rule[String, Double] =
     pure(value => util.Try(value.toDouble).toOption.map(Ior.right).getOrElse(Ior.left(messages)))
-
-  def mapValue[A: PathPrefix, B](key: A): Rule[Map[A, B], B] =
-    mapValue[A, B](key, errors(s"Value not found"))
-
-  def mapValue[A: PathPrefix, B](key: A, messages: Messages): Rule[Map[A, B], B] =
-    pure(map => map.get(key).map(Ior.right).getOrElse(Ior.left(messages map (_ prefix key))))
 
   val trimString: Rule[String, String] =
     pure(value => Ior.right(value.trim))
@@ -223,6 +203,47 @@ trait PropertyRules {
     test(messages)(value => !(values contains value))
 }
 
+trait CollectionRules {
+  self: BaseRules =>
+
+  def optional[A, B](rule: Rule[A, B]): Rule[Option[A], Option[B]] =
+    pure {
+      case Some(value) => rule(value) map (Some(_))
+      case None        => Ior.right(None)
+    }
+
+  def required[A, B](rule: Rule[A, B]): Rule[Option[A], B] =
+    required(rule, errors("Value is required"))
+
+  def required[A, B](rule: Rule[A, B], messages: Messages): Rule[Option[A], B] =
+    pure {
+      case Some(value) => rule(value)
+      case None        => Ior.left(messages)
+    }
+
+  def sequence[S[_] : Indexable : Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
+    pure { values =>
+      Indexable[S].zipWithIndex(values).map {
+        case (value, index) =>
+          rule(value) leftMap (_ map (_ prefix index))
+      }.sequenceU
+    }
+
+  def mapValue[A: PathPrefix, B](key: A): Rule[Map[A, B], B] =
+    mapValue[A, B](key, errors(s"Value not found"))
+
+  def mapValue[A: PathPrefix, B](key: A, messages: Messages): Rule[Map[A, B], B] =
+    pure(map => map.get(key).map(Ior.right).getOrElse(Ior.left(messages map (_ prefix key))))
+
+  def mapValues[A: PathPrefix, B, C](rule: Rule[B, C]): Rule[Map[A, B], Map[A, C]] =
+    pure { in: Map[A, B] =>
+      in.toList.map {
+        case (key, value) =>
+          rule.prefix(key).apply(value).map(key -> _)
+      }.sequenceU
+    } map (_.toMap)
+}
+
 /** Type class instances for Rule */
 trait RuleInstances {
   self: BaseRules =>
@@ -244,21 +265,4 @@ trait RuleInstances {
       override def product[B, C](rule1: Rule[A, B], rule2: Rule[A, C]): Rule[A, (B, C)] =
         rule1 zip rule2
     }
-}
-
-/* Per-field validation syntax for existing data */
-trait Rule1Syntax {
-  implicit class Rule1Ops[A](self: Rule1[A]) {
-    def field[B](path: Path, lens: Lens[A, B])(implicit rule: Rule1[B]): Rule1[A] =
-      self andThen rule.at(path, lens)
-
-    def field[B](accessor: A => B)(implicit rule: Rule1[B]): Rule1[A] =
-      macro RuleMacros.field[A, B]
-
-    def fieldWith[B](path: Path, lens: Lens[A, B])(implicit builder: A => Rule1[B]): Rule1[A] =
-      self andThen Rule.pure(value => builder(value).at(path, lens).apply(value))
-
-    def fieldWith[B](accessor: A => B)(implicit builder: A => Rule1[B]): Rule1[A] =
-      macro RuleMacros.fieldWith[A, B]
-  }
 }

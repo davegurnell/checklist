@@ -211,7 +211,7 @@ import scala.language.higherKinds
 case class Address(house: Int, street: String)
 
 implicit val checkAddress: Rule[Address, Address] =
-  Rule.pass[Address]
+  Rule[Address]
     .field(_.house)(gte(1))
     .field(_.street)(trimString andThen nonEmpty)
 ```
@@ -262,12 +262,12 @@ case class Address(house: Int, street: String)
 case class Person(name: String, age: Int, address: Address)
 
 implicit val checkAddress: Rule[Address, Address] =
-  Rule.pass[Address]
+  Rule[Address]
     .field(_.house)(gte(1))
     .field(_.street)(nonEmpty)
 
 implicit val checkPerson: Rule[Person, Person] =
-  Rule.pass[Person]
+  Rule[Person]
     .field(_.name)(nonEmpty)
     .field(_.age)(gte(1))
     .field(_.address)

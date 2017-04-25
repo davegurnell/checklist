@@ -33,7 +33,7 @@ class ReadmeSpec extends FreeSpec with Matchers {
   implicit val businessValidator: Rule1[Business] =
     Rule.pass[Business]
       .field(_.name)(nonEmpty[String])
-      .field(_.addresses)(addressValidator.seq)
+      .field(_.addresses)(sequence(addressValidator))
 
   "example from the readme" - {
     "should validate a valid person" in {

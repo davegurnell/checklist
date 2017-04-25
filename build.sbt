@@ -1,6 +1,6 @@
 organization  in ThisBuild := "com.davegurnell"
 name          in ThisBuild := "checklist"
-version       in ThisBuild := "0.1.1"
+version       in ThisBuild := "0.2.0-SNAPSHOT"
 
 scalaVersion       in ThisBuild := "2.12.1"
 crossScalaVersions in ThisBuild := Seq("2.11.8", "2.12.1")
@@ -51,6 +51,7 @@ lazy val checklistJS  = checklist.js
 lazy val root = project.in(file(".")).
   aggregate(checklistJS, checklistJVM).
   settings(
-    publish      := {},
-    publishLocal := {}
+    publish       := {},
+    publishLocal  := {},
+    publishSigned := {}
   )
