@@ -26,6 +26,18 @@ class CheckedSpec extends WordSpec with Matchers {
     }
   }
 
+  "checked.hasAValue" should {
+    "only return true for a right" in {
+      valueOnly.hasAValue should be(true)
+      errorAnd.hasAValue should be(true)
+      warningAnd.hasAValue should be(true)
+      bothAnd.hasAValue should be(true)
+      errorOnly.hasAValue should be(false)
+      warningOnly.hasAValue should be(false)
+      bothOnly.hasAValue should be(false)
+    }
+  }
+
   "checked.hasErrors" should {
     "only return true for a right" in {
       valueOnly.hasErrors should be(false)

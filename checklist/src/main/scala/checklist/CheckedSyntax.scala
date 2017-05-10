@@ -8,6 +8,9 @@ trait CheckedSyntax {
     def isValid: Boolean =
       value.left.isEmpty
 
+    def hasAValue: Boolean =
+      value.right.nonEmpty
+
     def hasErrors: Boolean =
       value.left.fold(false)(messages => messages.exists(_.isError))
 

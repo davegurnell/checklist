@@ -51,6 +51,8 @@ lazy val checklistJS  = checklist.js
 lazy val root = project.in(file(".")).
   aggregate(checklistJS, checklistJVM).
   settings(
-    publish       := {},
-    publishLocal  := {}
+    publishArtifact := false,
+    publish         := {},
+    publishLocal    := {},
+    skip in publish := true
   )
