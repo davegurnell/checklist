@@ -69,30 +69,6 @@ class ConverterRulesSpec extends FreeSpec with Matchers {
 }
 
 class PropertyRulesSpec extends FreeSpec with Matchers {
-  "seq" in {
-    import cats.instances.list._
-    val rule = eql("ok").seq[List]
-    rule(Nil) should be(Ior.right(Nil))
-    rule(List("ok", "ok")) should be(Ior.right(List("ok", "ok")))
-    rule(List("ko", "ok")) should be(Ior.both(errors(0 -> "Must be ok"), List("ko", "ok")))
-    rule(List("ok", "ko")) should be(Ior.both(errors(1 -> "Must be ok"), List("ok", "ko")))
-    rule(List("ko", "ko")) should be(Ior.both(errors(0 -> "Must be ok", 1 -> "Must be ok"), List("ko", "ko")))
-  }
-
-  "opt" in {
-    val rule = eql("ok").opt
-    rule(None)       should be(Ior.right(None))
-    rule(Some("ok")) should be(Ior.right(Some("ok")))
-    rule(Some("no")) should be(Ior.both(errors("Must be ok"), Some("no")))
-  }
-
-  "req" in {
-    val rule = eql(0).req
-    rule(None)    should be(Ior.left(errors("Value is required")))
-    rule(Some(0)) should be(Ior.right(0))
-    rule(Some(1)) should be(Ior.both(errors("Must be 0"), 1))
-  }
-
   "eql" in {
     val rule = eql(0)
     rule(0)  should be(Ior.right(0))
@@ -279,6 +255,32 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
   }
 }
 
+class CollectionRuleSpec extends FreeSpec with Matchers {
+  "sequence" in {
+    import cats.instances.list._
+    val rule = eql("ok").seq[List]
+    rule(Nil) should be(Ior.right(Nil))
+    rule(List("ok", "ok")) should be(Ior.right(List("ok", "ok")))
+    rule(List("ko", "ok")) should be(Ior.both(errors(0 -> "Must be ok"), List("ko", "ok")))
+    rule(List("ok", "ko")) should be(Ior.both(errors(1 -> "Must be ok"), List("ok", "ko")))
+    rule(List("ko", "ko")) should be(Ior.both(errors(0 -> "Must be ok", 1 -> "Must be ok"), List("ko", "ko")))
+  }
+
+  "optional" in {
+    val rule = optional(eql("ok"))
+    rule(None)       should be(Ior.right(None))
+    rule(Some("ok")) should be(Ior.right(Some("ok")))
+    rule(Some("no")) should be(Ior.both(errors("Must be ok"), Some("no")))
+  }
+
+  "required" in {
+    val rule = required(eql(0))
+    rule(None)    should be(Ior.left(errors("Value is required")))
+    rule(Some(0)) should be(Ior.right(0))
+    rule(Some(1)) should be(Ior.both(errors("Must be 0"), 1))
+  }
+}
+
 class CatsRuleSpec extends FreeSpec with Matchers {
   import cats._
   import cats.data._
@@ -320,7 +322,8 @@ class Rule1SyntaxSpec extends FreeSpec with Matchers {
   @Lenses case class Coord(x: Int, y: Int)
 
   "field macro" in {
-    val rule = Rule.pass[Coord].field(_.x)(gt(0, errors("fail")))
+    val rule = Rule[Coord]
+      .field(_.x)(gt(0, errors("fail")))
     rule(Coord(1, 0)) should be(Ior.right(Coord(1, 0)))
     rule(Coord(0, 0)) should be(Ior.both(errors(("x" :: PNil) -> "fail"), Coord(0, 0)))
     rule(Coord(0, 1)) should be(Ior.both(errors(("x" :: PNil) -> "fail"), Coord(0, 1)))
@@ -328,7 +331,8 @@ class Rule1SyntaxSpec extends FreeSpec with Matchers {
   }
 
   "fieldWith macro" in {
-    val rule = Rule.pass[Coord].fieldWith(_.x)(c => gte(c.y, errors("fail")))
+    val rule = Rule[Coord]
+      .fieldWith(_.x)(c => gte(c.y, errors("fail")))
     rule(Coord(1, 0)) should be(Ior.right(Coord(1, 0)))
     rule(Coord(0, 0)) should be(Ior.right(Coord(0, 0)))
     rule(Coord(0, 1)) should be(Ior.both(errors(("x" :: PNil) -> "fail"), Coord(0, 1)))
@@ -336,7 +340,8 @@ class Rule1SyntaxSpec extends FreeSpec with Matchers {
   }
 
   "field method" in {
-    val rule = Rule.pass[Coord].field("z" :: PNil, Coord.x)(gt(0, errors("fail")))
+    val rule = Rule[Coord]
+      .field("z" :: PNil, Coord.x)(gt(0, errors("fail")))
     rule(Coord(1, 0)) should be(Ior.right(Coord(1, 0)))
     rule(Coord(0, 0)) should be(Ior.both(errors(("z" :: PNil) -> "fail"), Coord(0, 0)))
     rule(Coord(0, 1)) should be(Ior.both(errors(("z" :: PNil) -> "fail"), Coord(0, 1)))
@@ -344,7 +349,8 @@ class Rule1SyntaxSpec extends FreeSpec with Matchers {
   }
 
   "fieldWith method" in {
-    val rule = Rule.pass[Coord].fieldWith("z" :: PNil, Coord.x)(c => gte(c.y, errors("fail")))
+    val rule = Rule[Coord]
+      .fieldWith("z" :: PNil, Coord.x)(c => gte(c.y, errors("fail")))
     rule(Coord(1, 0)) should be(Ior.right(Coord(1, 0)))
     rule(Coord(0, 0)) should be(Ior.right(Coord(0, 0)))
     rule(Coord(0, 1)) should be(Ior.both(errors(("z" :: PNil) -> "fail"), Coord(0, 1)))

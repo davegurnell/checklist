@@ -9,17 +9,6 @@ sealed abstract class Path {
     case PIndex(head, tail) => s"$head/${tail.pathString}"
   }
 
-  // TODO: Move this and the old `ValidationPath.unapply` method
-  // to a separate `js` package:
-
-  // def jsString: String = this match {
-  //   case PNil                       => ""
-  //   case PField(head, tail: PField) => s"$head.${tail.jsString}"
-  //   case PField(head, tail)         => s"$head${tail.jsString}"
-  //   case PIndex(head, tail: PField) => s"[$head.${tail.jsString}]"
-  //   case PIndex(head, tail)         => s"[$head${tail.jsString}]"
-  // }
-
   def prefix[A](prefix: A)(implicit format: PathPrefix[A]) =
     format.prefix(prefix, this)
 
@@ -45,6 +34,9 @@ final case class PathPrefix[A](func: (A, Path) => Path) {
 
   def path(value: A): Path =
     prefix(value, PNil)
+
+  def contramap[B](zoom: B => A): PathPrefix[B] =
+    PathPrefix((b, path) => func(zoom(b), path))
 }
 
 object PathPrefix {
@@ -54,16 +46,16 @@ object PathPrefix {
   def pure[A](func: (A, Path) => Path): PathPrefix[A] =
     PathPrefix(func)
 
-  implicit val stringPrefixer: PathPrefix[String] =
+  implicit val string: PathPrefix[String] =
     pure((field, path) => PField(field, path))
 
-  implicit val intPrefixer: PathPrefix[Int] =
+  implicit val int: PathPrefix[Int] =
     pure((index, path) => PIndex(index, path))
 
-  implicit val pathPrefixer: PathPrefix[Path] =
+  implicit val path: PathPrefix[Path] =
     pure((prefix, path) => prefix ++ path)
 
-  implicit val seqStringPrefixer: PathPrefix[Seq[String]] =
+  implicit val seqString: PathPrefix[Seq[String]] =
     pure((fields, path) => fields.foldRight(path)(PField.apply))
 
   import scala.language.implicitConversions

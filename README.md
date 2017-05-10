@@ -11,6 +11,18 @@ Copyright 2016-17 Dave Gurnell. Licensed [Apache 2][license].
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
+## Getting It
+
+Add one of the following to your `build.sbt`:
+
+```scala
+// For regular Scala projects:
+libraryDependencies += "com.davegurnell" %% "checklist" % "<<VERSION>>"
+
+// For ScalaJS projects:
+libraryDependencies += "com.davegurnell" %%% "checklist" % "<<VERSION>>"
+```
+
 ## Synopsis
 
 Checklist is a library for validating data in applications and inputs to applications.
@@ -199,7 +211,7 @@ import scala.language.higherKinds
 case class Address(house: Int, street: String)
 
 implicit val checkAddress: Rule[Address, Address] =
-  Rule.pass[Address]
+  Rule[Address]
     .field(_.house)(gte(1))
     .field(_.street)(trimString andThen nonEmpty)
 ```
@@ -250,12 +262,12 @@ case class Address(house: Int, street: String)
 case class Person(name: String, age: Int, address: Address)
 
 implicit val checkAddress: Rule[Address, Address] =
-  Rule.pass[Address]
+  Rule[Address]
     .field(_.house)(gte(1))
     .field(_.street)(nonEmpty)
 
 implicit val checkPerson: Rule[Person, Person] =
-  Rule.pass[Person]
+  Rule[Person]
     .field(_.name)(nonEmpty)
     .field(_.age)(gte(1))
     .field(_.address)

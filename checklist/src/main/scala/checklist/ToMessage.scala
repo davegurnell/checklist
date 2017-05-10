@@ -26,11 +26,3 @@ object ToMessage {
       def toWarning(pair: (Path, String)) = WarningMessage(pair._2, pair._1)
     }
 }
-
-trait MessageConstructors {
-  def errors[A](head: A, tail: A *)(implicit promoter: ToMessage[A]): NonEmptyList[Message] =
-    NonEmptyList.of(head, tail : _*).map(promoter.toError)
-
-  def warnings[A](head: A, tail: A *)(implicit promoter: ToMessage[A]): NonEmptyList[Message] =
-    NonEmptyList.of(head, tail : _*).map(promoter.toWarning)
-}
