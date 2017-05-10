@@ -52,6 +52,5 @@ lazy val root = project.in(file(".")).
   aggregate(checklistJS, checklistJVM).
   settings(
     publish       := {},
-    publishLocal  := {},
-    publishSigned := {}
+    publishLocal  := {}
   )
