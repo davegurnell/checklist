@@ -321,6 +321,9 @@ class CatsRuleSpec extends FreeSpec with Matchers {
 class Rule1SyntaxSpec extends FreeSpec with Matchers {
   @Lenses case class Coord(x: Int, y: Int)
 
+  case class Bar(baz: Int)
+  case class Foo(bar: Bar)
+
   "field macro" in {
     val rule = Rule[Coord]
       .field(_.x)(gt(0, errors("fail")))
@@ -328,6 +331,13 @@ class Rule1SyntaxSpec extends FreeSpec with Matchers {
     rule(Coord(0, 0)) should be(Ior.both(errors(("x" :: PNil) -> "fail"), Coord(0, 0)))
     rule(Coord(0, 1)) should be(Ior.both(errors(("x" :: PNil) -> "fail"), Coord(0, 1)))
     rule(Coord(1, 1)) should be(Ior.right(Coord(1, 1)))
+  }
+
+  "field macro with multi-level accessor" in {
+    val rule = Rule[Foo]
+      .field(_.bar.baz)(gt(0, errors("fail")))
+    rule(Foo(Bar(1))) should be(Ior.right(Foo(Bar(1))))
+    rule(Foo(Bar(0))) should be(Ior.both(errors(("bar" :: "baz" :: PNil) -> "fail"), Foo(Bar(0))))
   }
 
   "fieldWith macro" in {
