@@ -38,6 +38,7 @@ lazy val checklist = crossProject.
     ),
     libraryDependencies ++= Seq(
       "org.scala-lang"               % "scala-reflect"  % scalaVersion.value % Provided,
+      "com.chuusai"                %%% "shapeless"      % "2.3.2",
       "org.typelevel"              %%% "cats-core"      % "0.9.0",
       "com.github.julien-truffaut" %%% "monocle-core"   % "1.4.0",
       "com.github.julien-truffaut" %%% "monocle-macro"  % "1.4.0",
