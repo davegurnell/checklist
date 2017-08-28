@@ -3,7 +3,6 @@ package checklist
 import cats.data.{Ior, NonEmptyList}
 import org.scalatest._
 import monocle.macros.Lenses
-import scala.language.higherKinds
 import Rule._
 import Message._
 
@@ -282,7 +281,6 @@ class CollectionRuleSpec extends FreeSpec with Matchers {
 }
 
 class CatsRuleSpec extends FreeSpec with Matchers {
-  import cats._
   import cats.data._
   import cats.syntax.all._
 
@@ -366,4 +364,28 @@ class Rule1SyntaxSpec extends FreeSpec with Matchers {
     rule(Coord(0, 1)) should be(Ior.both(errors(("z" :: PNil) -> "fail"), Coord(0, 1)))
     rule(Coord(1, 1)) should be(Ior.right(Coord(1, 1)))
   }
+}
+
+class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
+  case class RawFoo(positive: Int, potentiallyEmptyList: List[String], untrimmed: String)
+  case class ValidatedFoo(positive: Int, nonEmptyList: NonEmptyList[String], trimmed: String)
+
+  val rule =
+    Rule.builder[RawFoo]
+      .check("positive", _.positive)(Rule.gte(0, errors("negative")))
+      .check("potentiallyEmptyList", _.potentiallyEmptyList)(Rule.nonEmptyList(errors("empty")))
+      .check("untrimmed", _.untrimmed)(Rule.trimString)
+      .build[ValidatedFoo]
+
+    "soft-failures should yield both" in {
+      rule(RawFoo(-10, List("foo"), "bar")) should be(Ior.Both(NonEmptyList.of(ErrorMessage("negative", PField("positive", PNil))), ValidatedFoo(-10, NonEmptyList.of("foo"), "bar")))
+    }
+
+    "transformations should occur" in {
+      rule(RawFoo(1, List("foo"), "bar ")) should be(Ior.Right(ValidatedFoo(1, NonEmptyList.of("foo"), "bar")))
+    }
+
+    "hard failures should yield left" in {
+      rule(RawFoo(1, List(), "bar")) should be(Ior.Left(NonEmptyList.of(ErrorMessage("empty", PField("potentiallyEmptyList", PNil)))))
+    }
 }

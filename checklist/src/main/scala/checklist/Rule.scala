@@ -4,10 +4,11 @@ import cats.{Applicative, Traverse}
 import cats.data.Ior
 import cats.instances.all._
 import cats.syntax.all._
-import monocle.{PLens, Lens}
+import monocle.PLens
 import scala.language.higherKinds
 import scala.util.matching.Regex
-import Message.{errors, warnings}
+import Message.errors
+import cats.data.NonEmptyList
 
 sealed abstract class Rule[A, B] {
   def apply(value: A): Checked[B]
@@ -15,8 +16,23 @@ sealed abstract class Rule[A, B] {
   def map[C](func: B => C): Rule[A, C] =
     Rule.pure(value => this(value) map func)
 
+  def emap[C](func: B => Checked[C]): Rule[A, C] =
+    Rule.pure(value => this(value) flatMap func)
+
+  def recover(func: Messages => Checked[B]): Rule[A, B] =
+    Rule.pure(value => this(value).fold(func, Ior.right, Ior.both))
+
+  def mapMessages(func: Messages => Messages): Rule[A, B] =
+    Rule.pure(value => this(value).fold(func andThen Ior.left, Ior.right, (msgs, r) => Ior.both(func(msgs), r)))
+
+  def mapEachMessage(func: Message => Message): Rule[A, B] =
+    mapMessages(_.map(func))
+
   def contramap[C](func: C => A): Rule[C, B] =
     Rule.pure(value => this(func(value)))
+
+  def contramapPath[C, D: PathPrefix](path: D, func: C => A): Rule[C, B] =
+    contramap(func).mapEachMessage(_.prefix(path))
 
   def flatMap[C](func: B => Rule[A, C]): Rule[A, C] =
     Rule.pure(value => this(value) flatMap (func(_)(value)))
@@ -30,8 +46,8 @@ sealed abstract class Rule[A, B] {
         case Ior.Left(msg1) =>
           that(a) match {
             case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Both(msg2, c) => Ior.left(msg1 concat msg2)
-            case Ior.Right(c)      => Ior.left(msg1)
+            case Ior.Both(msg2, _) => Ior.left(msg1 concat msg2)
+            case Ior.Right(_)      => Ior.left(msg1)
           }
         case Ior.Both(msg1, b) =>
           that(a) match {
@@ -154,35 +170,44 @@ trait PropertyRules {
   def lte[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     test(messages)(ord.lteq(_, comp))
 
-  def nonEmpty[S <% Seq[_]]: Rule[S, S] =
+  def nonEmpty[S](implicit view: S => Seq[_]): Rule[S, S] =
     nonEmpty(errors(s"Must not be empty"))
 
-  def nonEmpty[S <% Seq[_]](messages: Messages): Rule[S, S] =
+  def nonEmpty[S](messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).nonEmpty)
 
-  def lengthLt[S <% Seq[_]](comp: Int): Rule[S, S] =
+  def lengthLt[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthLt(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLt[S <% Seq[_]](comp: Int, messages: Messages): Rule[S, S] =
+  def lengthLt[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length < comp)
 
-  def lengthGt[S <% Seq[_]](comp: Int): Rule[S, S] =
+  def lengthGt[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGt[S <% Seq[_]](comp: Int, messages: Messages): Rule[S, S] =
+  def lengthGt[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length > comp)
 
-  def lengthLte[S <% Seq[_]](comp: Int): Rule[S, S] =
+  def lengthLte[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthLte(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLte[S <% Seq[_]](comp: Int, messages: Messages): Rule[S, S] =
+  def lengthLte[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length <= comp)
 
-  def lengthGte[S <% Seq[_]](comp: Int): Rule[S, S] =
+  def lengthGte[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGte[S <% Seq[_]](comp: Int, messages: Messages): Rule[S, S] =
+  def lengthGte[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length >= comp)
+
+  def nonEmptyList[A]: Rule[List[A], NonEmptyList[A]] =
+    nonEmptyList(errors("Must not be empty"))
+
+  def nonEmptyList[A](messages: Messages): Rule[List[A], NonEmptyList[A]] =
+    Rule.pure {
+      case Nil => Ior.left(messages)
+      case h :: t => Ior.right(NonEmptyList(h, t))
+    }
 
   def matchesRegex(regex: Regex): Rule[String, String] =
     matchesRegex(regex, errors(s"Must match the pattern '${regex}'"))
