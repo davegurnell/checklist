@@ -31,7 +31,7 @@ sealed abstract class Rule[A, B] {
   def contramap[C](func: C => A): Rule[C, B] =
     Rule.pure(value => this(func(value)))
 
-  def contramapPath[C, D: PathPrefix](path: D, func: C => A): Rule[C, B] =
+  def contramapPath[C, D: PathPrefix](path: D)(func: C => A): Rule[C, B] =
     contramap(func).mapEachMessage(_.prefix(path))
 
   def flatMap[C](func: B => Rule[A, C]): Rule[A, C] =

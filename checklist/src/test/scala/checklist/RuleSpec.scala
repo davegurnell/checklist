@@ -216,7 +216,7 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
   }
 
   "contramapPath" in {
-    val rule: Rule[Int, Int] = Rule.gt[Int](0, errors("fail")).contramapPath("n", _ + 1)
+    val rule: Rule[Int, Int] = Rule.gt[Int](0, errors("fail")).contramapPath("n")(_ + 1)
     rule(+1) should be(Ior.right(2))
     rule( 0) should be(Ior.right(1))
     rule(-1) should be(Ior.both(errors("fail").map(_.prefix("n")), 0))

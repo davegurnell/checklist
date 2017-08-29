@@ -12,7 +12,7 @@ trait RuleHListSyntax {
       (newRule.contramap(f) |@| self.rule).map( _ :: _ )
 
     def check[C, D, E: PathPrefix](path: E, f: A => C)(newRule: Rule[C, D]): Rule[A, D :: B] =
-      (newRule.contramapPath(path, f) |@| self.rule).map( _ :: _ )
+      (newRule.contramapPath(path)(f) |@| self.rule).map( _ :: _ )
 
     def build[C](implicit generic: Generic.Aux[C, Rev]): Rule[A, C] =
       rule.map(b => generic.from(b.reverse))
