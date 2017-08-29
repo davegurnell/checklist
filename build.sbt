@@ -1,5 +1,4 @@
 organization  in ThisBuild := "com.davegurnell"
-name          in ThisBuild := "checklist"
 version       in ThisBuild := "0.2.1"
 
 scalaVersion       in ThisBuild := "2.12.3"
@@ -28,18 +27,13 @@ enablePlugins(ScalaJSPlugin)
 lazy val checklist = crossProject.
   crossType(CrossType.Pure).
   settings(
-    scalacOptions     ++= Seq(
-      "-deprecation",
-      "-feature",
-      "-Xfatal-warnings"
-    ),
+    name in ThisBuild := "checklist",
     libraryDependencies ++= Seq(
       compilerPlugin("org.spire-math"  %% "kind-projector" % "0.9.3"),
       compilerPlugin("org.scalamacros" %% "paradise"       % "2.1.0" cross CrossVersion.full)
     ),
     libraryDependencies ++= Seq(
       "org.scala-lang"               % "scala-reflect"  % scalaVersion.value % Provided,
-      "com.chuusai"                %%% "shapeless"      % "2.3.2",
       "org.typelevel"              %%% "cats-core"      % "0.9.0",
       "com.github.julien-truffaut" %%% "monocle-core"   % "1.4.0",
       "com.github.julien-truffaut" %%% "monocle-macro"  % "1.4.0",
@@ -47,11 +41,25 @@ lazy val checklist = crossProject.
     )
   )
 
+lazy val refinement = crossProject.
+  crossType(CrossType.Pure).
+  dependsOn(checklist).
+  settings(
+    name in ThisBuild := "checklist-refinement",
+    libraryDependencies ++= Seq(
+      "com.chuusai"   %%% "shapeless" % "2.3.2",
+      "org.scalatest" %%% "scalatest" % "3.0.0" % Test
+    )
+  )
+
 lazy val checklistJVM = checklist.jvm
 lazy val checklistJS  = checklist.js
 
+lazy val refinementJVM = refinement.jvm
+lazy val refinementJS  = refinement.js
+
 lazy val root = project.in(file(".")).
-  aggregate(checklistJS, checklistJVM).
+  aggregate(checklistJS, checklistJVM, refinementJS, refinementJVM).
   settings(
     publishArtifact := false,
     publish         := {},
@@ -104,6 +112,7 @@ lazy val root = project.in(file(".")).
         "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
       ),
       "2.11" -> Seq(
+        "-deprecation",
         "-encoding", "UTF-8",
         "-feature",
         "-language:existentials",

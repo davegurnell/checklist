@@ -1,8 +1,9 @@
-package checklist
+package checklist.refinement
 
 import shapeless._
 import shapeless.ops.hlist.Reverse
 import cats.implicits._
+import checklist.{Rule, PathPrefix}
 
 trait RuleHListSyntax {
 
