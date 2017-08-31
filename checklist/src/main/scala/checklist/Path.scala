@@ -58,7 +58,6 @@ object PathPrefix {
   implicit val seqString: PathPrefix[Seq[String]] =
     pure((fields, path) => fields.foldRight(path)(PField.apply))
 
-  import scala.language.implicitConversions
   implicit def prefixToPath[A](value: A)(implicit prefixer: PathPrefix[A]): Path =
     prefixer.path(value)
 }

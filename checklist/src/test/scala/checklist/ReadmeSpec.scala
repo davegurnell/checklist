@@ -3,7 +3,6 @@ package checklist
 import cats.data.Ior
 import cats.instances.list._
 import org.scalatest._
-import scala.language.higherKinds
 
 class ReadmeSpec extends FreeSpec with Matchers {
   import Rule._

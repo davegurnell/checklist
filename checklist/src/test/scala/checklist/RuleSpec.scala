@@ -1,9 +1,8 @@
 package checklist
 
-import cats.data.{Ior, NonEmptyList}
+import cats.data.Ior
 import org.scalatest._
 import monocle.macros.Lenses
-import scala.language.higherKinds
 import Rule._
 import Message._
 
@@ -186,11 +185,41 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
     rule(-1) should be(Ior.both(errors("fail"), "-1!"))
   }
 
+  "emap" in {
+    val rule = Rule.gt[Int](0, errors("fail")).emap(x => if(x % 2 == 0) Ior.right(x) else Ior.left(errors("mapFail")))
+
+    rule(-1) should be(Ior.left(errors("fail", "mapFail")))
+    rule(0) should be(Ior.both(errors("fail"), 0))
+    rule(1) should be(Ior.left(errors("mapFail")))
+    rule(2) should be(Ior.right(2))
+  }
+
+  "mapMessages" in {
+    val rule = Rule.gt[Int](0, errors("fail")).mapMessages(_ => errors("mapped"))
+
+    rule(0) should be(Ior.both(errors("mapped"), 0))
+    rule(1) should be(Ior.right(1))
+  }
+
+  "mapEachMessage" in {
+    val rule = Rule.gt[Int](0, errors("fail")).mapEachMessage(_.prefix("foo"))
+
+    rule(0) should be(Ior.both(errors("fail").map(_.prefix("foo")), 0))
+    rule(1) should be(Ior.right(1))
+  }
+
   "contramap" in {
     val rule = Rule.gt[Int](0, errors("fail")).contramap[Int](_ + 1)
     rule(+1) should be(Ior.right(2))
     rule( 0) should be(Ior.right(1))
     rule(-1) should be(Ior.both(errors("fail"), 0))
+  }
+
+  "contramapPath" in {
+    val rule: Rule[Int, Int] = Rule.gt[Int](0, errors("fail")).contramapPath("n")(_ + 1)
+    rule(+1) should be(Ior.right(2))
+    rule( 0) should be(Ior.right(1))
+    rule(-1) should be(Ior.both(errors("fail").map(_.prefix("n")), 0))
   }
 
   "flatMap" in {
@@ -282,7 +311,6 @@ class CollectionRuleSpec extends FreeSpec with Matchers {
 }
 
 class CatsRuleSpec extends FreeSpec with Matchers {
-  import cats._
   import cats.data._
   import cats.syntax.all._
 

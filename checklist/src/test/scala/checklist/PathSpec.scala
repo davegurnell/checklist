@@ -1,7 +1,6 @@
 package checklist
 
 import org.scalatest._
-import scala.language.higherKinds
 
 class PathSpec extends FreeSpec with Matchers {
   "path.pathString" - {
