@@ -1,7 +1,5 @@
 package checklist
 
-import scala.language.experimental.macros
-import scala.language.higherKinds
 import scala.reflect.macros.blackbox
 
 class RuleMacros(val c: blackbox.Context) {

@@ -7,8 +7,8 @@ sealed abstract class Message(val isError: Boolean, val isWarning: Boolean) {
   def path: Path
 
   def prefix[A: PathPrefix](prefix: A): Message = this match {
-    case result @ ErrorMessage(text, path)   => result.copy(path = prefix :: path)
-    case result @ WarningMessage(text, path) => result.copy(path = prefix :: path)
+    case result @ ErrorMessage(_, path)   => result.copy(path = prefix :: path)
+    case result @ WarningMessage(_, path) => result.copy(path = prefix :: path)
   }
 }
 

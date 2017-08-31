@@ -1,8 +1,5 @@
 package checklist
 
-import monocle._
-import scala.language.experimental.macros
-
 trait CheckedSyntax {
   implicit class CheckedOps[A](value: Checked[A]) {
     def isValid: Boolean =

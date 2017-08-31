@@ -1,7 +1,5 @@
 package checklist
 
-import cats.data.NonEmptyList
-
 abstract class ToMessage[A] {
   def toError(value: A): Message
   def toWarning(value: A): Message
