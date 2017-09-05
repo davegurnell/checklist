@@ -63,6 +63,11 @@ trait RuleHListSyntax {
   }
 
   implicit class RuleObjectOps(rule: Rule.type) {
+    /**
+     * Initializes a new [[Rule]] in a valid format for usage with RuleHList syntax.
+     *
+     * @tparam A The type to be validated
+     */
     def builder[A]: Rule[A, HNil] = Rule.pass[A].map(_ => HNil)
   }
 }

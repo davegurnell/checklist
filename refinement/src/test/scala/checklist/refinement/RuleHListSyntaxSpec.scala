@@ -59,4 +59,13 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
       rule(()) should be(Ior.Right(Foo(5)))
     }
   }
+
+  "ignore" - {
+    case class Foo(n: Int)
+    case class Bar(n: Int)
+    val rule = Rule.builder[Foo].ignore(_.n).build[Bar]
+    "ignores a value" in {
+      rule(Foo(5)) should be(Ior.Right(Bar(5)))
+    }
+  }
 }
