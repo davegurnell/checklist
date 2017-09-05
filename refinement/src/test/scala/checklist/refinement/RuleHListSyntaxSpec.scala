@@ -51,4 +51,12 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
       rule(RawFoo(1, List(), "bar")) should be(Ior.Left(NonEmptyList.of(ErrorMessage("empty", PNil))))
     }
   }
+
+  "append" - {
+    case class Foo(n: Int)
+    val rule = Rule.builder[Unit].append(5).build[Foo]
+    "appends a value" in {
+      rule(()) should be(Ior.Right(Foo(5)))
+    }
+  }
 }
