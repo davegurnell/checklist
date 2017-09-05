@@ -41,7 +41,7 @@ trait RuleHListSyntax {
      * @param f The function for getting a property from [[A]]
      * @tparam C The type to be pulled from [[A]]
      */
-    def ignore[C](f: A => C): Rule[A, C :: B] =
+    def pass[C](f: A => C): Rule[A, C :: B] =
       check(f)(Rule.pass)
 
     /**

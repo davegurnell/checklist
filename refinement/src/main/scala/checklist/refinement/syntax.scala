@@ -15,7 +15,7 @@ package checklist.refinement
  *   Rule.builder[InputFoo]
  *     .check("untrimmed", _.untrimmed)(Rule.trimString)
  *     .check("maybeEmptyList", _.maybeEmptyList)(Rule.nonEmptyList)
- *     .ignore(_.name) // No validation will be performed, but the value for name will be passed through.
+ *     .pass(_.name) // No validation will be performed, but the value for name will be passed through.
  *     .append(util.Random.nextDouble()) // Appends a random double to the output type
  *     .build[ValidatedFoo]
  *
