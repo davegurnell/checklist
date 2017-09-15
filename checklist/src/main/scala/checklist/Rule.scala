@@ -1,7 +1,7 @@
 package checklist
 
-import cats.{Applicative, Traverse, Monoid, Foldable}
-import cats.data.Ior
+import cats.{Applicative, Traverse, Monoid}
+import cats.data.{Ior, Kleisli}
 import cats.implicits._
 import monocle.PLens
 import scala.language.higherKinds
@@ -9,6 +9,7 @@ import scala.util.matching.Regex
 import Message.errors
 import cats.data.NonEmptyList
 import checklist.IndexableSyntax._
+import checklist.SizeableSyntax._
 
 sealed abstract class Rule[A, B] {
   def apply(value: A): Checked[B]
@@ -81,6 +82,8 @@ sealed abstract class Rule[A, B] {
 
   def at[P: PathPrefix, S, T](prefix: P, lens: PLens[S, T, A, B]): Rule[S, T] =
     this composeLens lens prefix prefix
+
+  def kleisli: Kleisli[Checked, A, B] = Kleisli(apply)
 }
 
 object Rule extends BaseRules
@@ -99,6 +102,8 @@ trait BaseRules {
       def apply(value: A) =
         func(value)
     }
+
+  def fromKleisli[A, B](func: Kleisli[Checked, A, B]): Rule[A, B] = pure(func.apply)
 
   def pass[A]: Rule[A, A] =
     pure(Ior.right)
@@ -147,7 +152,7 @@ trait PropertyRules {
     test(messages)(_ == comp)
 
   def eqlStrict[A](comp: A): Rule[A, A] =
-    eql(comp, errors(s"Must be ${comp}"))
+    eqlStrict(comp, errors(s"Must be ${comp}"))
 
   def eqlStrict[A](comp: A, messages: Messages): Rule[A, A] =
     testStrict(messages)(_ == comp)
@@ -159,7 +164,7 @@ trait PropertyRules {
     test(messages)(_ != comp)
 
   def neqStrict[A](comp: A): Rule[A, A] =
-    neq[A](comp: A, errors(s"Must not be ${comp}"))
+    neqStrict[A](comp: A, errors(s"Must not be ${comp}"))
 
   def neqStrict[A](comp: A, messages: Messages): Rule[A, A] =
     testStrict(messages)(_ != comp)
@@ -171,7 +176,7 @@ trait PropertyRules {
     test(messages)(ord.gt(_, comp))
 
   def gtStrict[A](comp: A)(implicit ord: Ordering[A]): Rule[A, A] =
-    gt(comp, errors(s"Must be greater than ${comp}"))
+    gtStrict(comp, errors(s"Must be greater than ${comp}"))
 
   def gtStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     testStrict(messages)(ord.gt(_, comp))
@@ -183,7 +188,7 @@ trait PropertyRules {
     test(messages)(ord.lt(_, comp))
 
   def ltStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
-    lt(comp, errors(s"Must be less than ${comp}"))
+    ltStrict(comp, errors(s"Must be less than ${comp}"))
 
   def ltStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     testStrict(messages)(ord.lt(_, comp))
@@ -195,7 +200,7 @@ trait PropertyRules {
     test(messages)(ord.gteq(_, comp))
 
   def gteStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
-    gte(comp, errors(s"Must be greater than or equal to ${comp}"))
+    gteStrict(comp, errors(s"Must be greater than or equal to ${comp}"))
 
   def gteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     testStrict(messages)(ord.gteq(_, comp))
@@ -207,7 +212,7 @@ trait PropertyRules {
     test(messages)(ord.lteq(_, comp))
 
   def lteStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
-    lte(comp, errors(s"Must be less than or equal to ${comp}"))
+    lteStrict(comp, errors(s"Must be less than or equal to ${comp}"))
 
   def lteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     testStrict(messages)(ord.lteq(_, comp))
@@ -219,69 +224,69 @@ trait PropertyRules {
     test(messages)(value => value != Monoid[S].empty)
 
   def nonEmptyStrict[S: Monoid]: Rule[S, S] =
-    nonEmpty(errors(s"Must not be empty"))
+    nonEmptyStrict(errors(s"Must not be empty"))
 
   def nonEmptyStrict[S: Monoid](messages: Messages): Rule[S, S] =
     testStrict(messages)(value => value != Monoid[S].empty)
 
-  def lengthEq[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
+  def lengthEq[A: Sizeable](comp: Int): Rule[A, A] =
     lengthEq(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthEq[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthEq[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size == comp)
 
-  def lengthEqStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
+  def lengthEqStrict[A: Sizeable](comp: Int): Rule[A, A] =
     lengthEqStrict(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthEqStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthEqStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size == comp)
 
-  def lengthLt[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
+  def lengthLt[A: Sizeable](comp: Int): Rule[A, A] =
     lengthLt(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLt[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthLt[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size < comp)
 
-  def lengthLtStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
-    lengthLt(comp, errors(s"Must be length ${comp} or greater"))
+  def lengthLtStrict[A: Sizeable](comp: Int): Rule[A, A] =
+    lengthLtStrict(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLtStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthLtStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size < comp)
 
-  def lengthGt[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
+  def lengthGt[A: Sizeable](comp: Int): Rule[A, A] =
     lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGt[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthGt[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size > comp)
 
-  def lengthGtStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
-    lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
+  def lengthGtStrict[A: Sizeable](comp: Int): Rule[A, A] =
+    lengthGtStrict(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGtStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthGtStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size > comp)
 
-  def lengthLte[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
+  def lengthLte[A: Sizeable](comp: Int): Rule[A, A] =
     lengthLte(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLte[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthLte[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size <= comp)
 
-  def lengthLteStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
-    lengthLte(comp, errors(s"Must be length ${comp} or greater"))
+  def lengthLteStrict[A: Sizeable](comp: Int): Rule[A, A] =
+    lengthLteStrict(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLteStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthLteStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size <= comp)
 
-  def lengthGte[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
+  def lengthGte[A: Sizeable](comp: Int): Rule[A, A] =
     lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGte[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthGte[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size >= comp)
 
-  def lengthGteStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
-    lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
+  def lengthGteStrict[A: Sizeable](comp: Int): Rule[A, A] =
+    lengthGteStrict(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGteStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+  def lengthGteStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size >= comp)
 
   def nonEmptyList[A]: Rule[List[A], NonEmptyList[A]] =
@@ -300,7 +305,7 @@ trait PropertyRules {
     test(messages)(regex.findFirstIn(_).isDefined)
 
   def matchesRegexStrict(regex: Regex): Rule[String, String] =
-    matchesRegex(regex, errors(s"Must match the pattern '${regex}'"))
+    matchesRegexStrict(regex, errors(s"Must match the pattern '${regex}'"))
 
   def matchesRegexStrict(regex: Regex, messages: Messages): Rule[String, String] =
     testStrict(messages)(regex.findFirstIn(_).isDefined)
@@ -312,7 +317,7 @@ trait PropertyRules {
     test(messages)(value => values contains value)
 
   def containedInStrict[A](values: Seq[A]): Rule[A, A] =
-    containedIn(values, errors(s"Must be one of the values ${values.mkString(", ")}"))
+    containedInStrict(values, errors(s"Must be one of the values ${values.mkString(", ")}"))
 
   def containedInStrict[A](values: Seq[A], messages: Messages): Rule[A, A] =
     testStrict(messages)(value => values contains value)
@@ -324,7 +329,7 @@ trait PropertyRules {
     test(messages)(value => !(values contains value))
 
   def notContainedInStrict[A](values: Seq[A]): Rule[A, A] =
-    notContainedIn(values, errors(s"Must not be one of the values ${values.mkString(", ")}"))
+    notContainedInStrict(values, errors(s"Must not be one of the values ${values.mkString(", ")}"))
 
   def notContainedInStrict[A](values: Seq[A], messages: Messages): Rule[A, A] =
     testStrict(messages)(value => !(values contains value))

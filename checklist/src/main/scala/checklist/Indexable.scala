@@ -6,9 +6,12 @@ trait Indexable[S[_]] {
   def zipWithIndex[A](values: S[A]): S[(A, Int)] = mapWithIndex(values)((a, i) => (a, i))
 }
 
-object Indexable extends LowPriorityIndexable {
+object Indexable extends IndexableInstances {
   def apply[S[_]](implicit indexable: Indexable[S]): Indexable[S] =
     indexable
+}
+
+trait IndexableInstances extends LowPriorityIndexableInstances {
 
   implicit val listIndexable: Indexable[List] =
     new Indexable[List] {
@@ -30,9 +33,10 @@ object Indexable extends LowPriorityIndexable {
       override def zipWithIndex[A](values: Stream[A]): Stream[(A, Int)] =
         values.zipWithIndex
     }
+
 }
 
-trait LowPriorityIndexable {
+trait LowPriorityIndexableInstances {
   import cats.Traverse
   // Most of the stuff below is stolen from cats 1.0.0-MF's Traverse. Once this lib is on cats 1.0.0, Indexable can disappear because traverse does all of this.
   implicit def indexableFromTraverse[S[_]: Traverse]: Indexable[S] = {
