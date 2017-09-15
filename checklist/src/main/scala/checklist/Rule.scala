@@ -1,9 +1,8 @@
 package checklist
 
-import cats.{Applicative, Traverse}
+import cats.{Applicative, Traverse, Monoid, Foldable}
 import cats.data.Ior
-import cats.instances.all._
-import cats.syntax.all._
+import cats.implicits._
 import monocle.PLens
 import scala.language.higherKinds
 import scala.util.matching.Regex
@@ -74,7 +73,7 @@ sealed abstract class Rule[A, B] {
     Rule.required(this)
 
   def prefix[P: PathPrefix](prefix: P): Rule[A, B] =
-    Rule.pure(value => this(value) leftMap (_ map (_ prefix prefix)))
+    mapEachMessage(_.prefix(prefix))
 
   def composeLens[S, T](lens: PLens[S, T, A, B]): Rule[S, T] =
     Rule.pure(value => this(lens.get(value)) map (lens.set(_)(value)))
@@ -164,7 +163,7 @@ trait PropertyRules {
   def neqStrict[A](comp: A, messages: Messages): Rule[A, A] =
     testStrict(messages)(_ != comp)
 
-  def gt[A](comp: A)(implicit ord: Ordering[A]): Rule[A, A] =
+  def gt[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     gt(comp, errors(s"Must be greater than ${comp}"))
 
   def gt[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
@@ -212,77 +211,77 @@ trait PropertyRules {
   def lteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     testStrict(messages)(ord.lteq(_, comp))
 
-  def nonEmpty[S](implicit view: S => Seq[_]): Rule[S, S] =
+  def nonEmpty[S: Monoid]: Rule[S, S] =
     nonEmpty(errors(s"Must not be empty"))
 
-  def nonEmpty[S](messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    test(messages)(value => (value : Seq[_]).nonEmpty)
+  def nonEmpty[S: Monoid](messages: Messages): Rule[S, S] =
+    test(messages)(value => value != Monoid[S].empty)
 
-  def nonEmptyStrict[S](implicit view: S => Seq[_]): Rule[S, S] =
+  def nonEmptyStrict[S: Monoid]: Rule[S, S] =
     nonEmpty(errors(s"Must not be empty"))
 
-  def nonEmptyStrict[S](messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    testStrict(messages)(value => (value : Seq[_]).nonEmpty)
+  def nonEmptyStrict[S: Monoid](messages: Messages): Rule[S, S] =
+    testStrict(messages)(value => value != Monoid[S].empty)
 
-  def lengthEq[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthEq[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthEq(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthEq[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    test(messages)(value => (value : Seq[_]).length == comp)
+  def lengthEq[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    test(messages)(_.size == comp)
 
-  def lengthEqStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthEqStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthEqStrict(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthEqStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    testStrict(messages)(value => (value : Seq[_]).length == comp)
+  def lengthEqStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    testStrict(messages)(_.size == comp)
 
-  def lengthLt[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthLt[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthLt(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLt[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    test(messages)(value => (value : Seq[_]).length < comp)
+  def lengthLt[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    test(messages)(_.size < comp)
 
-  def lengthLtStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthLtStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthLt(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLtStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    testStrict(messages)(value => (value : Seq[_]).length < comp)
+  def lengthLtStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    testStrict(messages)(_.size < comp)
 
-  def lengthGt[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthGt[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGt[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    test(messages)(value => (value : Seq[_]).length > comp)
+  def lengthGt[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    test(messages)(_.size > comp)
 
-  def lengthGtStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthGtStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGtStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    testStrict(messages)(value => (value : Seq[_]).length > comp)
+  def lengthGtStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    testStrict(messages)(_.size > comp)
 
-  def lengthLte[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthLte[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthLte(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLte[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    test(messages)(value => (value : Seq[_]).length <= comp)
+  def lengthLte[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    test(messages)(_.size <= comp)
 
-  def lengthLteStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthLteStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthLte(comp, errors(s"Must be length ${comp} or greater"))
 
-  def lengthLteStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    testStrict(messages)(value => (value : Seq[_]).length <= comp)
+  def lengthLteStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    testStrict(messages)(_.size <= comp)
 
-  def lengthGte[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthGte[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGte[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    test(messages)(value => (value : Seq[_]).length >= comp)
+  def lengthGte[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    test(messages)(_.size >= comp)
 
-  def lengthGteStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+  def lengthGteStrict[F[_]: Foldable, A](comp: Int): Rule[F[A], F[A]] =
     lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
 
-  def lengthGteStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
-    testStrict(messages)(value => (value : Seq[_]).length >= comp)
+  def lengthGteStrict[F[_]: Foldable, A](comp: Int, messages: Messages): Rule[F[A], F[A]] =
+    testStrict(messages)(_.size >= comp)
 
   def nonEmptyList[A]: Rule[List[A], NonEmptyList[A]] =
     nonEmptyList(errors("Must not be empty"))
@@ -352,7 +351,7 @@ trait CollectionRules {
     pure { values =>
       Indexable[S].zipWithIndex(values).traverse {
         case (value, index) =>
-          rule(value) leftMap (_ map (_ prefix index))
+          rule.prefix(index).apply(value)
       }
     }
 
