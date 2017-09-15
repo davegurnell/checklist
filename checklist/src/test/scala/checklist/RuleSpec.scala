@@ -439,25 +439,39 @@ class CatsRuleSpec extends FreeSpec with Matchers {
     (getField("street") andThen nonEmpty)
   ) map (Address.apply)
 
-  "good data" in {
-    val actual = parseAddress(Map(
-      "house"  -> "29",
-      "street" -> "Acacia Road"
-    ))
-    val expected = Ior.right(Address(29, "Acacia Road"))
-    actual should be(expected)
+
+  def runTests(f: Map[String, String] => Checked[Address]) = {
+    "good data" in {
+      val actual = parseAddress(Map(
+        "house"  -> "29",
+        "street" -> "Acacia Road"
+      ))
+      val expected = Ior.right(Address(29, "Acacia Road"))
+      actual should be(expected)
+    }
+
+    "empty data" in {
+      val actual   = parseAddress(Map.empty[String, String])
+      val expected = Ior.left(errors("Field not found: house", "Field not found: street"))
+      actual should be(expected)
+    }
+
+    "bad fields" in {
+      val actual   = parseAddress(Map("house" -> "-1", "street" -> ""))
+      val expected = Ior.both(errors("Must be greater than 0", "Must not be empty"), Address(-1, ""))
+      actual should be(expected)
+    }
   }
 
-  "empty data" in {
-    val actual   = parseAddress(Map.empty[String, String])
-    val expected = Ior.left(errors("Field not found: house", "Field not found: street"))
-    actual should be(expected)
-  }
+  runTests(parseAddress.apply)
 
-  "bad fields" in {
-    val actual   = parseAddress(Map("house" -> "-1", "street" -> ""))
-    val expected = Ior.both(errors("Must be greater than 0", "Must not be empty"), Address(-1, ""))
-    actual should be(expected)
+  "kleisli" - {
+    "to" - {
+      runTests(parseAddress.kleisli.apply)
+    }
+    "from" - {
+      runTests(Rule.fromKleisli(parseAddress.kleisli).apply)
+    }
   }
 }
 
