@@ -124,8 +124,8 @@ lazy val root = project.in(file(".")).
         "-Yno-adapted-args",
         "-Ywarn-dead-code",
         "-Ywarn-value-discard",
+        "-Ypartial-unification",
         "-Xmax-classfile-name", "128",
-        "-Xfatal-warnings",
-        "-Ypartial-unification"
+        "-Xfatal-warnings"
       )
     )

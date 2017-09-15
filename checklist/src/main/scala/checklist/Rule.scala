@@ -131,8 +131,14 @@ trait ConverterRules {
 trait PropertyRules {
   self: BaseRules =>
 
-  def test[A](messages: => Messages)(func: A => Boolean): Rule[A, A] =
-    pure(value => if(func(value)) Ior.right(value) else Ior.both(messages, value))
+  def test[A](messages: => Messages, strict: Boolean = false)(func: A => Boolean): Rule[A, A] =
+    pure(value => if(func(value)) Ior.right(value) else {
+      if(strict) Ior.left(messages)
+      else Ior.both(messages, value)
+    })
+
+  def testStrict[A](messages: => Messages)(func: A => Boolean): Rule[A, A] =
+    test(messages, true)(func)
 
   def eql[A](comp: A): Rule[A, A] =
     eql(comp, errors(s"Must be ${comp}"))
@@ -140,11 +146,23 @@ trait PropertyRules {
   def eql[A](comp: A, messages: Messages): Rule[A, A] =
     test(messages)(_ == comp)
 
+  def eqlStrict[A](comp: A): Rule[A, A] =
+    eql(comp, errors(s"Must be ${comp}"))
+
+  def eqlStrict[A](comp: A, messages: Messages): Rule[A, A] =
+    testStrict(messages)(_ == comp)
+
   def neq[A](comp: A): Rule[A, A] =
     neq[A](comp: A, errors(s"Must not be ${comp}"))
 
   def neq[A](comp: A, messages: Messages): Rule[A, A] =
     test(messages)(_ != comp)
+
+  def neqStrict[A](comp: A): Rule[A, A] =
+    neq[A](comp: A, errors(s"Must not be ${comp}"))
+
+  def neqStrict[A](comp: A, messages: Messages): Rule[A, A] =
+    testStrict(messages)(_ != comp)
 
   def gt[A](comp: A)(implicit ord: Ordering[A]): Rule[A, A] =
     gt(comp, errors(s"Must be greater than ${comp}"))
@@ -152,11 +170,23 @@ trait PropertyRules {
   def gt[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     test(messages)(ord.gt(_, comp))
 
+  def gtStrict[A](comp: A)(implicit ord: Ordering[A]): Rule[A, A] =
+    gt(comp, errors(s"Must be greater than ${comp}"))
+
+  def gtStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    testStrict(messages)(ord.gt(_, comp))
+
   def lt[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     lt(comp, errors(s"Must be less than ${comp}"))
 
   def lt[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     test(messages)(ord.lt(_, comp))
+
+  def ltStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    lt(comp, errors(s"Must be less than ${comp}"))
+
+  def ltStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    testStrict(messages)(ord.lt(_, comp))
 
   def gte[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     gte(comp, errors(s"Must be greater than or equal to ${comp}"))
@@ -164,11 +194,23 @@ trait PropertyRules {
   def gte[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     test(messages)(ord.gteq(_, comp))
 
+  def gteStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    gte(comp, errors(s"Must be greater than or equal to ${comp}"))
+
+  def gteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    testStrict(messages)(ord.gteq(_, comp))
+
   def lte[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     lte(comp, errors(s"Must be less than or equal to ${comp}"))
 
   def lte[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     test(messages)(ord.lteq(_, comp))
+
+  def lteStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    lte(comp, errors(s"Must be less than or equal to ${comp}"))
+
+  def lteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+    testStrict(messages)(ord.lteq(_, comp))
 
   def nonEmpty[S](implicit view: S => Seq[_]): Rule[S, S] =
     nonEmpty(errors(s"Must not be empty"))
@@ -176,11 +218,35 @@ trait PropertyRules {
   def nonEmpty[S](messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).nonEmpty)
 
+  def nonEmptyStrict[S](implicit view: S => Seq[_]): Rule[S, S] =
+    nonEmpty(errors(s"Must not be empty"))
+
+  def nonEmptyStrict[S](messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    testStrict(messages)(value => (value : Seq[_]).nonEmpty)
+
+  def lengthEq[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+    lengthEq(comp, errors(s"Must be length ${comp} or greater"))
+
+  def lengthEq[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    test(messages)(value => (value : Seq[_]).length == comp)
+
+  def lengthEqStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+    lengthEqStrict(comp, errors(s"Must be length ${comp} or greater"))
+
+  def lengthEqStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    testStrict(messages)(value => (value : Seq[_]).length == comp)
+
   def lengthLt[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthLt(comp, errors(s"Must be length ${comp} or greater"))
 
   def lengthLt[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length < comp)
+
+  def lengthLtStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+    lengthLt(comp, errors(s"Must be length ${comp} or greater"))
+
+  def lengthLtStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    testStrict(messages)(value => (value : Seq[_]).length < comp)
 
   def lengthGt[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
@@ -188,17 +254,35 @@ trait PropertyRules {
   def lengthGt[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length > comp)
 
+  def lengthGtStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+    lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
+
+  def lengthGtStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    testStrict(messages)(value => (value : Seq[_]).length > comp)
+
   def lengthLte[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthLte(comp, errors(s"Must be length ${comp} or greater"))
 
   def lengthLte[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length <= comp)
 
+  def lengthLteStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+    lengthLte(comp, errors(s"Must be length ${comp} or greater"))
+
+  def lengthLteStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    testStrict(messages)(value => (value : Seq[_]).length <= comp)
+
   def lengthGte[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
     lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
 
   def lengthGte[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
     test(messages)(value => (value : Seq[_]).length >= comp)
+
+  def lengthGteStrict[S](comp: Int)(implicit view: S => Seq[_]): Rule[S, S] =
+    lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
+
+  def lengthGteStrict[S](comp: Int, messages: Messages)(implicit view: S => Seq[_]): Rule[S, S] =
+    testStrict(messages)(value => (value : Seq[_]).length >= comp)
 
   def nonEmptyList[A]: Rule[List[A], NonEmptyList[A]] =
     nonEmptyList(errors("Must not be empty"))
@@ -215,17 +299,35 @@ trait PropertyRules {
   def matchesRegex(regex: Regex, messages: Messages): Rule[String, String] =
     test(messages)(regex.findFirstIn(_).isDefined)
 
+  def matchesRegexStrict(regex: Regex): Rule[String, String] =
+    matchesRegex(regex, errors(s"Must match the pattern '${regex}'"))
+
+  def matchesRegexStrict(regex: Regex, messages: Messages): Rule[String, String] =
+    testStrict(messages)(regex.findFirstIn(_).isDefined)
+
   def containedIn[A](values: Seq[A]): Rule[A, A] =
     containedIn(values, errors(s"Must be one of the values ${values.mkString(", ")}"))
 
   def containedIn[A](values: Seq[A], messages: Messages): Rule[A, A] =
     test(messages)(value => values contains value)
 
+  def containedInStrict[A](values: Seq[A]): Rule[A, A] =
+    containedIn(values, errors(s"Must be one of the values ${values.mkString(", ")}"))
+
+  def containedInStrict[A](values: Seq[A], messages: Messages): Rule[A, A] =
+    testStrict(messages)(value => values contains value)
+
   def notContainedIn[A](values: Seq[A]): Rule[A, A] =
     notContainedIn(values, errors(s"Must not be one of the values ${values.mkString(", ")}"))
 
   def notContainedIn[A](values: Seq[A], messages: Messages): Rule[A, A] =
     test(messages)(value => !(values contains value))
+
+  def notContainedInStrict[A](values: Seq[A]): Rule[A, A] =
+    notContainedIn(values, errors(s"Must not be one of the values ${values.mkString(", ")}"))
+
+  def notContainedInStrict[A](values: Seq[A], messages: Messages): Rule[A, A] =
+    testStrict(messages)(value => !(values contains value))
 }
 
 trait CollectionRules {
