@@ -6,7 +6,7 @@ trait Indexable[S[_]] {
   def zipWithIndex[A](values: S[A]): S[(A, Int)] = mapWithIndex(values)((a, i) => (a, i))
 }
 
-object Indexable extends IndexableInstances {
+object Indexable extends IndexableInstances with IndexableSyntax {
   def apply[S[_]](implicit indexable: Indexable[S]): Indexable[S] =
     indexable
 }

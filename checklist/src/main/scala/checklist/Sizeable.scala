@@ -13,7 +13,7 @@ object Sizeable extends SizeableInstances with SizeableSyntax {
     }
 }
 
-trait SizeableInstances extends LowPriorityIndexableInstances {
+trait SizeableInstances extends LowPrioritySizeableInstances {
   implicit val sizeableString: Sizeable[String] = Sizeable.instance(_.size.toLong)
 }
 
