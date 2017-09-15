@@ -248,10 +248,10 @@ trait CollectionRules {
 
   def sequence[S[_] : Indexable : Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
     pure { values =>
-      Indexable[S].zipWithIndex(values).map {
+      Indexable[S].zipWithIndex(values).traverse {
         case (value, index) =>
           rule(value) leftMap (_ map (_ prefix index))
-      }.sequenceU
+      }
     }
 
   def mapValue[A: PathPrefix, B](key: A): Rule[Map[A, B], B] =
@@ -262,10 +262,10 @@ trait CollectionRules {
 
   def mapValues[A: PathPrefix, B, C](rule: Rule[B, C]): Rule[Map[A, B], Map[A, C]] =
     pure { in: Map[A, B] =>
-      in.toList.map {
+      in.toList.traverse {
         case (key, value) =>
           rule.prefix(key).apply(value).map(key -> _)
-      }.sequenceU
+      }
     } map (_.toMap)
 }
 
