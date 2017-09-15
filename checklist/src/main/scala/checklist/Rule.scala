@@ -8,6 +8,7 @@ import scala.language.higherKinds
 import scala.util.matching.Regex
 import Message.errors
 import cats.data.NonEmptyList
+import checklist.IndexableSyntax._
 
 sealed abstract class Rule[A, B] {
   def apply(value: A): Checked[B]
@@ -63,7 +64,7 @@ sealed abstract class Rule[A, B] {
       }
     }
 
-  def seq[S[_]: Indexable: Traverse]: Rule[S[A], S[B]] =
+  def seq[S[_]: Traverse]: Rule[S[A], S[B]] =
     Rule.sequence(this)
 
   def opt: Rule[Option[A], Option[B]] =
@@ -347,10 +348,9 @@ trait CollectionRules {
       case None        => Ior.left(messages)
     }
 
-  def sequence[S[_] : Indexable : Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
+  def sequence[S[_] : Traverse : Indexable, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
     pure { values =>
-      Indexable[S].zipWithIndex(values).traverse {
-        case (value, index) =>
+      values.traverseWithIndex { (value, index) =>
           rule.prefix(index).apply(value)
       }
     }

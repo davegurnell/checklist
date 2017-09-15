@@ -1,6 +1,7 @@
 package checklist
 
 import cats.data.Ior
+import cats.implicits._
 import org.scalatest._
 import monocle.macros.Lenses
 import Rule._
@@ -118,7 +119,7 @@ class PropertyRulesSpec extends FreeSpec with Matchers {
   }
 
   "lengthLt"  in {
-    val rule = lengthLt[String](5, errors("fail"))
+    val rule = lengthLt(5, errors("fail"))
 
     rule("")      should be(Ior.right(""))
     rule("abcd")  should be(Ior.right("abcd"))
