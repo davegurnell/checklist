@@ -29,4 +29,13 @@ class IndexableSpec extends FreeSpec with Matchers {
     indexable.zipWithIndex(vector) should be(vector.zipWithIndex)
     indexable.mapWithIndex(vector)((a, b) => (a, b)) should be(indexable.zipWithIndex(vector))
   }
+
+  "Syntax" in {
+    import cats.data.NonEmptyList
+    val list = NonEmptyList.of('f', 'o', 'o')
+
+    list.zipWithIndex should be(Indexable[NonEmptyList].zipWithIndex(list))
+    list.mapWithIndex((a, i) => (a, i)) should be(Indexable[NonEmptyList].mapWithIndex(list)((a, i) => (a, i)))
+    list.traverseWithIndex((a, i) => Option((a, i))) should be(list.zipWithIndex.map { case (a, i) => Option((a, i))}.sequence)
+  }
 }
