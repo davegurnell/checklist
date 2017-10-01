@@ -1,8 +1,8 @@
 package checklist
 
 import cats.data.Ior
-import cats.instances.list._
 import org.scalatest._
+import cats.implicits._
 
 class ReadmeSpec extends FreeSpec with Matchers {
   import Rule._
