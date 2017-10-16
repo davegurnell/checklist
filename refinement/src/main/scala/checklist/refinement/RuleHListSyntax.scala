@@ -11,7 +11,7 @@ trait RuleHListSyntax {
   implicit class RuleHList[A, B <: HList, Rev <: HList](rule: Rule[A, B])(implicit reverse: Reverse.Aux[B, Rev])  { self =>
 
     /**
-     * Adds a new property to the rule builder to be sanitzed and validated.  You usually want to use the overload which lets you 
+     * Adds a new property to the rule builder to be sanitzed and validated.  You usually want to use the overload which lets you
      * specify a path, but if you do not want to specify a path, use this one.
      *
      * @param f The function which picks a property of A to test
@@ -27,13 +27,35 @@ trait RuleHListSyntax {
      *
      * @param path The path to the property specified, for more helpful errors. Usually a String.
      * @param f The function which picks a property of [[A]] to test
-     * @param newRule The rule with which to verify the property  
+     * @param newRule The rule with which to verify the property
      * @tparam C The raw, unvalidated type which is pulled out of an [[A]]
      * @tparam D The validated type, produced by running sanitization/validation provided by a `Rule[C, D]`
      * @tparam E The type of the provided `PathPrefix`, usually a `String`.
      */
     def check[C, D, E: PathPrefix](path: E, f: A => C)(newRule: Rule[C, D]): Rule[A, D :: B] =
       (newRule.contramapPath(path)(f) |@| self.rule).map( _ :: _ )
+
+    /**
+      * Checks a property and discards the result.
+      *
+      * @param path The path to the property specified, for more helpful errors. Usually a String.
+      * @param f The function which picks a property of [[A]] to test
+      * @param newRule The rule with which to verify the property
+      * @tparam P The type of the provided `PathPrefix`, usually a `String`.
+      * @tparam C The raw, unvalidated type which is pulled out of an [[A]]
+      */
+    def checkAndDrop[P: PathPrefix, C](path: P, f: A => C)(rule: Rule[C, _]): Rule[A, B] =
+      (Rule.pure { a: A => rule(f(a))}).prefix(path) *> self.rule
+
+    /**
+      * Checks a property and discards the result.
+      *
+      * @param f The function which picks a property of [[A]] to test
+      * @param newRule The rule with which to verify the property
+      * @tparam C The raw, unvalidated type which is pulled out of an [[A]]
+      */
+    def checkAndDrop[C](f: A => C)(rule: Rule[C, _]): Rule[A, B] =
+      (Rule.pure { a: A => rule(f(a))}) *> self.rule
 
     /**
      * Adds a new property to the rule builder, using the provided input type.  Performs no sanitization/validation.
@@ -52,7 +74,7 @@ trait RuleHListSyntax {
      */
     def append[C](c: => C): Rule[A, C :: B] =
       (Rule.pure[A, C](_ => Ior.right(c)) |@| self.rule).map( _ :: _ )
-    
+
     /**
      * Finalizes the rule builder, and produces a more useful class as output, rather than an HList.
      *
