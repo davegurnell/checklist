@@ -26,9 +26,9 @@ trait RuleHListSyntax {
      * Adds a new property to the rule builder to be sanitzed and validated
      *
      * @param path The path to the property specified, for more helpful errors. Usually a String.
-     * @param f The function which picks a property of [[A]] to test
+     * @param f The function which picks a property of `A` to test
      * @param newRule The rule with which to verify the property
-     * @tparam C The raw, unvalidated type which is pulled out of an [[A]]
+     * @tparam C The raw, unvalidated type which is pulled out of an `A`
      * @tparam D The validated type, produced by running sanitization/validation provided by a `Rule[C, D]`
      * @tparam E The type of the provided `PathPrefix`, usually a `String`.
      */
@@ -39,10 +39,10 @@ trait RuleHListSyntax {
       * Checks a property and discards the result.
       *
       * @param path The path to the property specified, for more helpful errors. Usually a String.
-      * @param f The function which picks a property of [[A]] to test
+      * @param f The function which picks a property of `A` to test
       * @param newRule The rule with which to verify the property
       * @tparam P The type of the provided `PathPrefix`, usually a `String`.
-      * @tparam C The raw, unvalidated type which is pulled out of an [[A]]
+      * @tparam C The raw, unvalidated type which is pulled out of an `A`
       */
     def checkAndDrop[P: PathPrefix, C](path: P, f: A => C)(rule: Rule[C, _]): Rule[A, B] =
       (Rule.pure { a: A => rule(f(a))}).prefix(path) *> self.rule
@@ -50,9 +50,9 @@ trait RuleHListSyntax {
     /**
       * Checks a property and discards the result.
       *
-      * @param f The function which picks a property of [[A]] to test
+      * @param f The function which picks a property of `A` to test
       * @param newRule The rule with which to verify the property
-      * @tparam C The raw, unvalidated type which is pulled out of an [[A]]
+      * @tparam C The raw, unvalidated type which is pulled out of an `A`
       */
     def checkAndDrop[C](f: A => C)(rule: Rule[C, _]): Rule[A, B] =
       (Rule.pure { a: A => rule(f(a))}) *> self.rule
@@ -60,8 +60,8 @@ trait RuleHListSyntax {
     /**
      * Adds a new property to the rule builder, using the provided input type.  Performs no sanitization/validation.
      *
-     * @param f The function for getting a property from [[A]]
-     * @tparam C The type to be pulled from [[A]]
+     * @param f The function for getting a property from `A`
+     * @tparam C The type to be pulled from `A`
      */
     def pass[C](f: A => C): Rule[A, C :: B] =
       check(f)(Rule.pass)
@@ -86,7 +86,7 @@ trait RuleHListSyntax {
 
   implicit class RuleObjectOps(rule: Rule.type) {
     /**
-     * Initializes a new [[Rule]] in a valid format for usage with RuleHList syntax.
+     * Initializes a new `Rule` in a valid format for usage with RuleHList syntax.
      *
      * @tparam A The type to be validated
      */
