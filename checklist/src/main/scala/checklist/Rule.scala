@@ -11,12 +11,26 @@ import cats.data.NonEmptyList
 import checklist.IndexableSyntax._
 import checklist.SizeableSyntax._
 
+/**
+ * A Rule validates/sanitizes a value of type [[A]] producing a type [[B]] inside an `Ior[NonEmptyList[Messages], B]`
+ *
+ * @tparam A The type to be validated
+ * @tparam B The type to be produced
+ */
 sealed abstract class Rule[A, B] {
+  /**
+   * Performs validation on [[A]]
+   *
+   * @tparam A The value to be validated
+   */
   def apply(value: A): Checked[B]
 
   def map[C](func: B => C): Rule[A, C] =
     Rule.pure(value => this(value) map func)
 
+  /**
+   * Maps the result type with the potential for a failure to occur.
+   */
   def emap[C](func: B => Checked[C]): Rule[A, C] =
     Rule.pure(value => this(value) flatMap func)
 
