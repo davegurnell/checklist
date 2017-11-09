@@ -8,7 +8,6 @@ import scala.language.higherKinds
 import scala.util.matching.Regex
 import Message.errors
 import cats.data.NonEmptyList
-import checklist.IndexableSyntax._
 import checklist.SizeableSyntax._
 
 /**
@@ -367,9 +366,9 @@ trait CollectionRules {
       case None        => Ior.left(messages)
     }
 
-  def sequence[S[_] : Traverse : Indexable, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
+  def sequence[S[_] : Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
     pure { values =>
-      values.traverseWithIndex { (value, index) =>
+      values.traverseWithIndexM { (value, index) =>
           rule.prefix(index).apply(value)
       }
     }
