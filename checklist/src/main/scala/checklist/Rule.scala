@@ -60,14 +60,14 @@ sealed abstract class Rule[A, B] {
       this(a) match {
         case Ior.Left(msg1) =>
           that(a) match {
-            case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Both(msg2, _) => Ior.left(msg1 concat msg2)
+            case Ior.Left(msg2)    => Ior.left(msg1 concatNel msg2)
+            case Ior.Both(msg2, _) => Ior.left(msg1 concatNel msg2)
             case Ior.Right(_)      => Ior.left(msg1)
           }
         case Ior.Both(msg1, b) =>
           that(a) match {
-            case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Both(msg2, c) => Ior.both(msg1 concat msg2, (b, c))
+            case Ior.Left(msg2)    => Ior.left(msg1 concatNel msg2)
+            case Ior.Both(msg2, c) => Ior.both(msg1 concatNel msg2, (b, c))
             case Ior.Right(c)      => Ior.both(msg1, (b, c))
           }
         case Ior.Right(b) =>
