@@ -13,11 +13,14 @@ trait ScalacheckInstances {
   implicit def arbRule[A: Arbitrary, B: Arbitrary](implicit arbF: Arbitrary[A => Ior[A, B]]): Arbitrary[Rule[A, B]] = Arbitrary(
     for {
       f <- arbF.arbitrary
-    } yield Rule.pure(f.map {
-      case Ior.Both(_, b) => Ior.both(NonEmptyList.of(ErrorMessage("both")), b)
-      case Ior.Left(_) => Ior.left(NonEmptyList.of(ErrorMessage("left")))
-      case Ior.Right(a) => Ior.right(a)
-    })
+      messages <- Arbitrary.arbitrary[Messages]
+    } yield {
+      Rule.pure(f(_).fold(
+        _ => Ior.left(messages),
+        Ior.right(_),
+        (_, b) => Ior.both(messages, b)
+      ))
+    }
   )
 
   implicit val arbPath: Arbitrary[Path] = Arbitrary(
