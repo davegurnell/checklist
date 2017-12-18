@@ -1,12 +1,14 @@
 package checklist
 
-import cats.{Applicative, Traverse, Monoid}
+import cats.{Applicative, Monoid, Traverse}
 import cats.data.{Ior, Kleisli}
 import cats.implicits._
 import monocle.PLens
+
 import scala.language.higherKinds
 import scala.util.matching.Regex
 import Message.errors
+import cats.arrow.Profunctor
 import cats.data.NonEmptyList
 import checklist.SizeableSyntax._
 
@@ -408,5 +410,11 @@ trait RuleInstances {
 
       override def product[B, C](rule1: Rule[A, B], rule2: Rule[A, C]): Rule[A, (B, C)] =
         rule1 zip rule2
+    }
+
+  implicit val ruleProfunctor: Profunctor[Rule] =
+    new Profunctor[Rule] {
+      override def dimap[A, B, C, D](fab: Rule[A, B])(f: (C) => A)(g: (B) => D) =
+        fab.contramap(f).map(g)
     }
 }
