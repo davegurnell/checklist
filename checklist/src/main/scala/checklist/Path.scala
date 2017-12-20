@@ -1,5 +1,7 @@
 package checklist
 
+import cats.Order
+
 sealed abstract class Path {
   def pathString: String = this match {
     case PNil               => ""
@@ -23,6 +25,8 @@ sealed abstract class Path {
 
   override def toString = s"Path($pathString)"
 }
+
+object Path extends PathInstances
 
 case object PNil extends Path
 final case class PField(head: String, tail: Path = PNil) extends Path
@@ -60,4 +64,9 @@ object PathPrefix {
 
   implicit def prefixToPath[A](value: A)(implicit prefixer: PathPrefix[A]): Path =
     prefixer.path(value)
+}
+
+trait PathInstances {
+  import cats.instances.string._
+  implicit val pathOrder: Order[Path] = Order.by[Path, String](_.pathString)
 }
