@@ -24,7 +24,7 @@ pomExtra in Global := {
 
 enablePlugins(ScalaJSPlugin)
 
-lazy val catsVersion = "1.0.0-RC1"
+lazy val catsVersion = "1.0.0"
 lazy val monocleVersion = "1.5.0-cats-M2"
 
 lazy val checklist = crossProject.
