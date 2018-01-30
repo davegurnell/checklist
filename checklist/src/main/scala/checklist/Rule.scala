@@ -1,14 +1,15 @@
 package checklist
 
-import cats.{Applicative, Traverse, Monoid}
+import cats.{Applicative, Monoid, Traverse}
 import cats.data.{Ior, Kleisli}
 import cats.implicits._
 import monocle.PLens
+
 import scala.language.higherKinds
 import scala.util.matching.Regex
 import Message.errors
+import cats.arrow.Profunctor
 import cats.data.NonEmptyList
-import checklist.IndexableSyntax._
 import checklist.SizeableSyntax._
 
 /**
@@ -60,14 +61,14 @@ sealed abstract class Rule[A, B] {
       this(a) match {
         case Ior.Left(msg1) =>
           that(a) match {
-            case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Both(msg2, _) => Ior.left(msg1 concat msg2)
+            case Ior.Left(msg2)    => Ior.left(msg1 concatNel msg2)
+            case Ior.Both(msg2, _) => Ior.left(msg1 concatNel msg2)
             case Ior.Right(_)      => Ior.left(msg1)
           }
         case Ior.Both(msg1, b) =>
           that(a) match {
-            case Ior.Left(msg2)    => Ior.left(msg1 concat msg2)
-            case Ior.Both(msg2, c) => Ior.both(msg1 concat msg2, (b, c))
+            case Ior.Left(msg2)    => Ior.left(msg1 concatNel msg2)
+            case Ior.Both(msg2, c) => Ior.both(msg1 concatNel msg2, (b, c))
             case Ior.Right(c)      => Ior.both(msg1, (b, c))
           }
         case Ior.Right(b) =>
@@ -367,9 +368,9 @@ trait CollectionRules {
       case None        => Ior.left(messages)
     }
 
-  def sequence[S[_] : Traverse : Indexable, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
+  def sequence[S[_] : Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
     pure { values =>
-      values.traverseWithIndex { (value, index) =>
+      values.traverseWithIndexM { (value, index) =>
           rule.prefix(index).apply(value)
       }
     }
@@ -409,5 +410,11 @@ trait RuleInstances {
 
       override def product[B, C](rule1: Rule[A, B], rule2: Rule[A, C]): Rule[A, (B, C)] =
         rule1 zip rule2
+    }
+
+  implicit val ruleProfunctor: Profunctor[Rule] =
+    new Profunctor[Rule] {
+      override def dimap[A, B, C, D](fab: Rule[A, B])(f: (C) => A)(g: (B) => D) =
+        fab.contramap(f).map(g)
     }
 }

@@ -20,7 +20,7 @@ trait RuleHListSyntax {
      * @tparam D The validated type, produced by running sanitization/validation provided by a `Rule[C, D]`
      */
     def check[C, D](f: A => C)(newRule: Rule[C, D]): Rule[A, D :: B] =
-      (newRule.contramap(f) |@| self.rule).map( _ :: _ )
+      (newRule.contramap(f), self.rule).mapN( _ :: _ )
 
     /**
      * Adds a new property to the rule builder to be sanitzed and validated
@@ -33,7 +33,7 @@ trait RuleHListSyntax {
      * @tparam E The type of the provided `PathPrefix`, usually a `String`.
      */
     def check[C, D, E: PathPrefix](path: E, f: A => C)(newRule: Rule[C, D]): Rule[A, D :: B] =
-      (newRule.contramapPath(path)(f) |@| self.rule).map( _ :: _ )
+      (newRule.contramapPath(path)(f), self.rule).mapN( _ :: _ )
 
     /**
       * Checks a property and discards the result.
@@ -73,7 +73,7 @@ trait RuleHListSyntax {
      * @tparam C The type of the property to be added
      */
     def append[C](c: => C): Rule[A, C :: B] =
-      (Rule.pure[A, C](_ => Ior.right(c)) |@| self.rule).map( _ :: _ )
+      (Rule.pure[A, C](_ => Ior.right(c)), self.rule).mapN( _ :: _ )
 
     /**
      * Finalizes the rule builder, and produces a more useful class as output, rather than an HList.

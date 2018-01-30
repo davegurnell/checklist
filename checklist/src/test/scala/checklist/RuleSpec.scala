@@ -348,7 +348,7 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
     } yield b
     rule(  0) should be(Ior.right(0))
     rule( 10) should be(Ior.both(errors("Must be < 10"), 10))
-    rule(-10) should be(Ior.both(warnings("Should be >= 0") concat errors("Must be > -10"), -10))
+    rule(-10) should be(Ior.both(warnings("Should be >= 0") concatNel errors("Must be > -10"), -10))
   }
 
   "andThen" in {
@@ -434,10 +434,9 @@ class CatsRuleSpec extends FreeSpec with Matchers {
   def getField(name: String): Rule[Map[String, String], String] =
     pure(_.get(name).map(Ior.right).getOrElse(Ior.left(errors(s"Field not found: ${name}"))))
 
-  val parseAddress = (
-    (getField("house")  andThen parseInt andThen gt(0)) |@|
-    (getField("street") andThen nonEmpty)
-  ) map (Address.apply)
+  val parseAddress =
+    ((getField("house")  andThen parseInt andThen gt(0)), (getField("street") andThen nonEmpty))
+      .mapN (Address.apply)
 
 
   def runTests(f: Map[String, String] => Checked[Address]) = {

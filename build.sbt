@@ -1,5 +1,5 @@
 organization  in ThisBuild := "com.davegurnell"
-version       in ThisBuild := "0.4.0"
+version       in ThisBuild := "0.5.0"
 
 scalaVersion       in ThisBuild := "2.12.3"
 crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.3")
@@ -24,6 +24,9 @@ pomExtra in Global := {
 
 enablePlugins(ScalaJSPlugin)
 
+lazy val catsVersion = "1.0.0"
+lazy val monocleVersion = "1.5.0-cats"
+
 lazy val checklist = crossProject.
   crossType(CrossType.Pure).
   settings(
@@ -34,10 +37,11 @@ lazy val checklist = crossProject.
     ),
     libraryDependencies ++= Seq(
       "org.scala-lang"               % "scala-reflect"  % scalaVersion.value % Provided,
-      "org.typelevel"              %%% "cats-core"      % "0.9.0",
-      "com.github.julien-truffaut" %%% "monocle-core"   % "1.4.0",
-      "com.github.julien-truffaut" %%% "monocle-macro"  % "1.4.0",
-      "org.scalatest"              %%% "scalatest"      % "3.0.0" % Test
+      "org.typelevel"              %%% "cats-core"      % catsVersion,
+      "org.typelevel"              %%% "cats-testkit"   % catsVersion % Test,
+      "com.github.julien-truffaut" %%% "monocle-core"   % monocleVersion,
+      "com.github.julien-truffaut" %%% "monocle-macro"  % monocleVersion,
+      "org.scalatest"              %%% "scalatest"      % "3.0.4" % Test
     )
   )
 
