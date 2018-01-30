@@ -1,6 +1,6 @@
 package checklist
 
-import cats.Order
+import cats.{Monoid, Order}
 
 sealed abstract class Path {
   def pathString: String = this match {
@@ -69,4 +69,9 @@ object PathPrefix {
 trait PathInstances {
   import cats.instances.string._
   implicit val pathOrder: Order[Path] = Order.by[Path, String](_.pathString)
+  implicit val pathMonoid: Monoid[Path] =
+    new Monoid[Path] {
+      override def empty = PNil
+      override def combine(x: Path, y: Path) = x ++ y
+    }
 }
