@@ -21,6 +21,12 @@ libraryDependencies += "com.davegurnell" %% "checklist" % "<<VERSION>>"
 
 // For ScalaJS projects:
 libraryDependencies += "com.davegurnell" %%% "checklist" % "<<VERSION>>"
+
+// Optional refinement module for Scala projects:
+libraryDependencies += "com.davegurnell" %% "checklist-refinement" % "<<VERSION>>"
+
+// Optional refinement module for ScalaJS projects:
+libraryDependencies += "com.davegurnell" %%% "checklist-refinement" % "<<VERSION>>"
 ```
 
 ## Synopsis
