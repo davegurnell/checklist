@@ -10,6 +10,7 @@ import org.scalacheck.Arbitrary
 package object laws extends CatsInstances with ScalacheckInstances
 
 trait ScalacheckInstances {
+
   implicit def arbRule[A: Arbitrary, B: Arbitrary](implicit arbF: Arbitrary[A => Ior[A, B]]): Arbitrary[Rule[A, B]] = Arbitrary(
     for {
       f <- arbF.arbitrary
@@ -21,6 +22,12 @@ trait ScalacheckInstances {
         (_, b) => Ior.both(messages, b)
       ))
     }
+  )
+
+  implicit def arbChecked[E: Arbitrary, W: Arbitrary, R: Arbitrary]: Arbitrary[Checked[E, W, R]] = Arbitrary(
+    for {
+      choice <- Arbitrary.arbitrary[Option[Boolean]]
+      checked <- choice.fold(Errored(E.)
   )
 
   implicit val arbPath: Arbitrary[Path] = Arbitrary(
