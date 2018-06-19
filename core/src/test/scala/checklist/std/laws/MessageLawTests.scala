@@ -1,8 +1,9 @@
-package checklist.laws
+package checklist
+package std
+package laws
 
 import cats.kernel.laws.discipline.{EqTests, OrderTests}
 import cats.tests.CatsSuite
-import checklist.Message
 
 class MessageLawTests extends CatsSuite {
   checkAll("Message", EqTests[Message].eqv)

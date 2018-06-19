@@ -11,10 +11,10 @@ sealed abstract class Path {
     case PIndex(head, tail) => s"$head/${tail.pathString}"
   }
 
-  def prefix[A](prefix: A)(implicit format: PathPrefix[A]) =
+  def prefix[A](prefix: A)(implicit format: ToPath[A]): Path =
     format.prefix(prefix, this)
 
-  def ::[A](prefix: A)(implicit format: PathPrefix[A]) =
+  def ::[A](prefix: A)(implicit format: ToPath[A]): Path =
     format.prefix(prefix, this)
 
   def ++(that: Path): Path = this match {
@@ -26,52 +26,24 @@ sealed abstract class Path {
   override def toString = s"Path($pathString)"
 }
 
-object Path extends PathInstances
-
 case object PNil extends Path
 final case class PField(head: String, tail: Path = PNil) extends Path
 final case class PIndex(head: Int, tail: Path = PNil) extends Path
 
-final case class PathPrefix[A](func: (A, Path) => Path) {
-  def prefix(value: A, path: Path): Path =
-    func(value, path)
-
-  def path(value: A): Path =
-    prefix(value, PNil)
-
-  def contramap[B](zoom: B => A): PathPrefix[B] =
-    PathPrefix((b, path) => func(zoom(b), path))
-}
-
-object PathPrefix {
-  def apply[A](implicit prefix: PathPrefix[A]): PathPrefix[A] =
-    prefix
-
-  def pure[A](func: (A, Path) => Path): PathPrefix[A] =
-    PathPrefix(func)
-
-  implicit val string: PathPrefix[String] =
-    pure((field, path) => PField(field, path))
-
-  implicit val int: PathPrefix[Int] =
-    pure((index, path) => PIndex(index, path))
-
-  implicit val path: PathPrefix[Path] =
-    pure((prefix, path) => prefix ++ path)
-
-  implicit val seqString: PathPrefix[Seq[String]] =
-    pure((fields, path) => fields.foldRight(path)(PField.apply))
-
-  implicit def prefixToPath[A](value: A)(implicit prefixer: PathPrefix[A]): Path =
-    prefixer.path(value)
-}
+object Path extends PathInstances
 
 trait PathInstances {
   import cats.instances.string._
-  implicit val pathOrder: Order[Path] = Order.by[Path, String](_.pathString)
+
+  implicit val pathOrder: Order[Path] =
+    Order.by[Path, String](_.pathString)
+
   implicit val pathMonoid: Monoid[Path] =
     new Monoid[Path] {
-      override def empty = PNil
-      override def combine(x: Path, y: Path) = x ++ y
+      override def empty: Path =
+        PNil
+
+      override def combine(x: Path, y: Path): Path =
+        x ++ y
     }
 }

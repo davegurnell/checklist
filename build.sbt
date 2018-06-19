@@ -92,7 +92,7 @@ lazy val scalacVersionOptions =
       "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
       "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
       "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-      "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+      // "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
       "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     ),
     "2.11" -> Seq(

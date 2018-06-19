@@ -1,17 +1,17 @@
 package checklist
+package core
 
 import scala.reflect.macros.blackbox
 
 class RuleMacros(val c: blackbox.Context) {
   import c.universe._
 
-  def field[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(rule: c.Tree): c.Tree = {
-    val q"($param) => $rhs" = accessor
+  def field[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(rule2: c.Tree): c.Tree = {
     val a = weakTypeOf[A]
     val b = weakTypeOf[B]
     val path = accessorPrefix(accessor)
     val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
-    q"${c.prefix}.field($path, $lens)($rule)"
+    q"${c.prefix}.field($path, $lens)($rule2)"
   }
 
   def fieldWith[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(builder: c.Tree): c.Tree = {
