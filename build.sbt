@@ -1,18 +1,19 @@
 organization  in ThisBuild := "com.davegurnell"
 version       in ThisBuild := "0.5.0"
 
-scalaVersion       in ThisBuild := "2.12.3"
-crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.3")
+scalaVersion       in ThisBuild := "2.12.6"
+crossScalaVersions in ThisBuild := Seq("2.11.13", "2.12.6")
 scalacOptions      in ThisBuild ++= scalacVersionOptions((scalaVersion in Compile).value.split('.').dropRight(1).mkString("."))
 
 enablePlugins(ScalaJSPlugin)
 
-lazy val catsVersion    = "1.0.0"
-lazy val monocleVersion = "1.5.0-cats"
+// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-lazy val checklist = crossProject.
+lazy val core = crossProject(JSPlatform, JVMPlatform).
   crossType(CrossType.Pure).
-  settings(sonatypeSettings("checklist")).
+  in(file("core")).
+  settings(sonatypeSettings("checklist-core")).
   settings(
     libraryDependencies ++= Seq(
       compilerPlugin("org.spire-math"  %% "kind-projector" % "0.9.3"),
@@ -20,25 +21,26 @@ lazy val checklist = crossProject.
     ),
     libraryDependencies ++= Seq(
       "org.scala-lang"               % "scala-reflect"  % scalaVersion.value % Provided,
-      "org.typelevel"              %%% "cats-core"      % catsVersion,
-      "org.typelevel"              %%% "cats-testkit"   % catsVersion % Test,
-      "com.github.julien-truffaut" %%% "monocle-core"   % monocleVersion,
-      "com.github.julien-truffaut" %%% "monocle-macro"  % monocleVersion,
+      "org.typelevel"              %%% "cats-core"      % "1.1.0",
+      "org.typelevel"              %%% "cats-testkit"   % "1.1.0" % Test,
+      "com.github.julien-truffaut" %%% "monocle-core"   % "1.5.1-cats",
+      "com.github.julien-truffaut" %%% "monocle-macro"  % "1.5.1-cats",
       "org.scalatest"              %%% "scalatest"      % "3.0.4" % Test
     )
   )
 
-lazy val checklistJVM = checklist.jvm
-lazy val checklistJS  = checklist.js
+lazy val coreJVM = core.jvm
+lazy val coreJS  = core.js
 
-lazy val refinement = crossProject.
+lazy val refinement = crossProject(JSPlatform, JVMPlatform).
   crossType(CrossType.Pure).
-  dependsOn(checklist).
+  in(file("refinement")).
+  dependsOn(core).
   settings(sonatypeSettings("checklist-refinement")).
   settings(
     libraryDependencies ++= Seq(
-      "com.chuusai"   %%% "shapeless" % "2.3.2",
-      "org.scalatest" %%% "scalatest" % "3.0.0" % Test
+      "com.chuusai"   %%% "shapeless" % "2.3.3",
+      "org.scalatest" %%% "scalatest" % "3.0.5" % Test
     )
   )
 
@@ -46,7 +48,7 @@ lazy val refinementJVM = refinement.jvm
 lazy val refinementJS  = refinement.js
 
 lazy val root = project.in(file(".")).
-  aggregate(checklistJS, checklistJVM, refinementJS, refinementJVM).
+  aggregate(coreJS, coreJVM, refinementJS, refinementJVM).
   settings(disableSonatypeSettings)
 
 lazy val scalacVersionOptions =
