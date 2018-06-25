@@ -1,5 +1,5 @@
 organization  in ThisBuild := "com.davegurnell"
-version       in ThisBuild := "0.5.0"
+version       in ThisBuild := "0.5.1"
 
 scalaVersion       in ThisBuild := "2.12.6"
 crossScalaVersions in ThisBuild := Seq("2.11.13", "2.12.6")
@@ -10,11 +10,11 @@ enablePlugins(ScalaJSPlugin)
 // shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-lazy val core = crossProject(JSPlatform, JVMPlatform).
-  crossType(CrossType.Pure).
-  in(file("core")).
-  settings(sonatypeSettings("checklist-core")).
-  settings(
+lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("core"))
+  .settings(sonatypeSettings("checklist-core"))
+  .settings(
     libraryDependencies ++= Seq(
       compilerPlugin("org.spire-math"  %% "kind-projector" % "0.9.3"),
       compilerPlugin("org.scalamacros" %% "paradise"       % "2.1.0" cross CrossVersion.full)
@@ -26,30 +26,30 @@ lazy val core = crossProject(JSPlatform, JVMPlatform).
       "com.github.julien-truffaut" %%% "monocle-core"   % "1.5.1-cats",
       "com.github.julien-truffaut" %%% "monocle-macro"  % "1.5.1-cats",
       "org.scalatest"              %%% "scalatest"      % "3.0.4" % Test
-    )
+    ),
   )
 
 lazy val coreJVM = core.jvm
 lazy val coreJS  = core.js
 
-lazy val refinement = crossProject(JSPlatform, JVMPlatform).
-  crossType(CrossType.Pure).
-  in(file("refinement")).
-  dependsOn(core).
-  settings(sonatypeSettings("checklist-refinement")).
-  settings(
+lazy val refinement = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("refinement"))
+  .dependsOn(core)
+  .settings(sonatypeSettings("checklist-refinement"))
+  .settings(
     libraryDependencies ++= Seq(
       "com.chuusai"   %%% "shapeless" % "2.3.3",
       "org.scalatest" %%% "scalatest" % "3.0.5" % Test
-    )
+    ),
   )
 
 lazy val refinementJVM = refinement.jvm
 lazy val refinementJS  = refinement.js
 
-lazy val root = project.in(file(".")).
-  aggregate(coreJS, coreJVM, refinementJS, refinementJVM).
-  settings(disableSonatypeSettings)
+lazy val root = project.in(file("."))
+  .aggregate(coreJS, coreJVM, refinementJS, refinementJVM)
+  .settings(disableSonatypeSettings)
 
 lazy val scalacVersionOptions =
   Map(
@@ -134,7 +134,7 @@ def sonatypeSettings(libraryName: String) =
           <url>http://twitter.com/davegurnell</url>
         </developer>
       </developers>
-    }
+    },
   )
 
 def disableSonatypeSettings =
@@ -142,5 +142,5 @@ def disableSonatypeSettings =
     publishArtifact := false,
     publish         := {},
     publishLocal    := {},
-    skip in publish := true
+    skip in publish := true,
   )
