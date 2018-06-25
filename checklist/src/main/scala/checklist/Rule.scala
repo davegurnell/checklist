@@ -245,61 +245,61 @@ trait PropertyRules {
     testStrict(messages)(value => value != Monoid[S].empty)
 
   def lengthEq[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthEq(comp, errors(s"Must be length ${comp} or greater"))
+    lengthEq(comp, errors(s"Must be length ${comp}"))
 
   def lengthEq[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size == comp)
 
   def lengthEqStrict[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthEqStrict(comp, errors(s"Must be length ${comp} or greater"))
+    lengthEqStrict(comp, errors(s"Must be length ${comp}"))
 
   def lengthEqStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size == comp)
 
   def lengthLt[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthLt(comp, errors(s"Must be length ${comp} or greater"))
+    lengthLt(comp, errors(s"Must be shorter than length ${comp}"))
 
   def lengthLt[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size < comp)
 
   def lengthLtStrict[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthLtStrict(comp, errors(s"Must be length ${comp} or greater"))
+    lengthLtStrict(comp, errors(s"Must be shorter than length ${comp}"))
 
   def lengthLtStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size < comp)
 
   def lengthGt[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthGt(comp, errors(s"Must be length ${comp} or shorter"))
+    lengthGt(comp, errors(s"Must be longer than length ${comp}"))
 
   def lengthGt[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size > comp)
 
   def lengthGtStrict[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthGtStrict(comp, errors(s"Must be length ${comp} or shorter"))
+    lengthGtStrict(comp, errors(s"Must be longer than length ${comp}"))
 
   def lengthGtStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size > comp)
 
   def lengthLte[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthLte(comp, errors(s"Must be length ${comp} or greater"))
+    lengthLte(comp, errors(s"Must be length ${comp} or shorter"))
 
   def lengthLte[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size <= comp)
 
   def lengthLteStrict[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthLteStrict(comp, errors(s"Must be length ${comp} or greater"))
+    lengthLteStrict(comp, errors(s"Must be length ${comp} or shorter"))
 
   def lengthLteStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size <= comp)
 
   def lengthGte[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthGte(comp, errors(s"Must be length ${comp} or shorter"))
+    lengthGte(comp, errors(s"Must be length ${comp} or longer"))
 
   def lengthGte[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     test(messages)(_.size >= comp)
 
   def lengthGteStrict[A: Sizeable](comp: Int): Rule[A, A] =
-    lengthGteStrict(comp, errors(s"Must be length ${comp} or shorter"))
+    lengthGteStrict(comp, errors(s"Must be length ${comp} or longer"))
 
   def lengthGteStrict[A: Sizeable](comp: Int, messages: Messages): Rule[A, A] =
     testStrict(messages)(_.size >= comp)
