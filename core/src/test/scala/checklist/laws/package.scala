@@ -1,6 +1,6 @@
 package checklist
 
-import cats.Eq
+import cats.{Eq, Id}
 import cats.data.{Ior, NonEmptyList}
 import cats.implicits._
 import cats.laws.discipline.arbitrary._
@@ -10,12 +10,12 @@ import org.scalacheck.Arbitrary
 package object laws extends CatsInstances with ScalacheckInstances
 
 trait ScalacheckInstances {
-  implicit def arbRule[A: Arbitrary, B: Arbitrary](implicit arbF: Arbitrary[A => Ior[A, B]]): Arbitrary[Rule[A, B]] = Arbitrary(
+  implicit def arbRule[A: Arbitrary, B: Arbitrary](implicit arbF: Arbitrary[A => Ior[A, B]]): Arbitrary[Rule[Id, A, B]] = Arbitrary(
     for {
       f <- arbF.arbitrary
       messages <- Arbitrary.arbitrary[Messages]
     } yield {
-      Rule.pure(f(_).fold(
+      Rule.pure[Id, A, B](in => f(in).fold(
         _ => Ior.left(messages),
         Ior.right(_),
         (_, b) => Ior.both(messages, b)
@@ -49,6 +49,6 @@ trait ScalacheckInstances {
 }
 
 trait CatsInstances {
-  implicit def ruleEq[A: Arbitrary, B: Eq]: Eq[Rule[A, B]] =
-    catsLawsEqForFn1[A, Checked[B]].contramap[Rule[A, B]](rule => rule.apply _)
+  implicit def ruleEq[A: Arbitrary, B: Eq]: Eq[Rule[Id, A, B]] =
+    catsLawsEqForFn1[A, Checked[B]].contramap[Rule[Id, A, B]](rule => rule.apply _)
 }

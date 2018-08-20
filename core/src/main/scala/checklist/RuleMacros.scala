@@ -1,25 +1,53 @@
 package checklist
 
+import scala.language.higherKinds
+
 import scala.reflect.macros.blackbox
 
 class RuleMacros(val c: blackbox.Context) {
   import c.universe._
 
-  def field[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(rule: c.Tree): c.Tree = {
+  def field[F[_], G[_], R[_], A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(rule: c.Tree)(evG: c.Tree, canLift: c.Tree): c.Tree = {
+//    val q"($param) => $rhs" = accessor
+    val a = weakTypeOf[A]
+    val b = weakTypeOf[B]
+    val path = accessorPrefix(accessor)
+    val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
+    q"${c.prefix}.field($path, $lens)($rule)($evG, $canLift)"
+  }
+
+  /*def fieldImplicit[F[_], G[_], R[_], A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(evG: c.Tree, rule: c.Tree, canLift: c.Tree): c.Tree = {
     val q"($param) => $rhs" = accessor
     val a = weakTypeOf[A]
     val b = weakTypeOf[B]
     val path = accessorPrefix(accessor)
     val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
-    q"${c.prefix}.field($path, $lens)($rule)"
-  }
+    q"${c.prefix}.fieldImplicit($path, $lens)($evG, $rule, $canLift)"
+  }*/
 
-  def fieldWith[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(builder: c.Tree): c.Tree = {
+  def fieldImplicit[F[_], A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree): c.Tree = {
+//    val q"($param) => $rhs" = accessor
     val a = weakTypeOf[A]
     val b = weakTypeOf[B]
     val path = accessorPrefix(accessor)
     val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
-    q"${c.prefix}.fieldWith($path, $lens)($builder)"
+    q"${c.prefix}.fieldImplicit($path, $lens)"
+  }
+
+  def fieldWith[F[_], G[_], R[_], A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(builder: c.Tree)(evG: c.Tree, canLift: c.Tree): c.Tree = {
+    val a = weakTypeOf[A]
+    val b = weakTypeOf[B]
+    val path = accessorPrefix(accessor)
+    val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
+    q"${c.prefix}.fieldWith($path, $lens)($builder)($evG, $canLift)"
+  }
+
+  def fieldWithImplicit[F[_], G[_], R[_], A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(evG: c.Tree, builder: c.Tree, canLift: c.Tree): c.Tree = {
+    val a = weakTypeOf[A]
+    val b = weakTypeOf[B]
+    val path = accessorPrefix(accessor)
+    val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
+    q"${c.prefix}.fieldWithImplicit($path, $lens)($evG, $builder, $canLift)"
   }
 
   private def accessorPrefix(accessor: c.Tree): Tree = {

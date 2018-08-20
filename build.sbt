@@ -25,7 +25,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel"              %%% "cats-testkit"   % "1.1.0" % Test,
       "com.github.julien-truffaut" %%% "monocle-core"   % "1.5.1-cats",
       "com.github.julien-truffaut" %%% "monocle-macro"  % "1.5.1-cats",
-      "org.scalatest"              %%% "scalatest"      % "3.0.4" % Test
+      "org.scalatest"              %%% "scalatest"      % "3.0.4" % Test,
+      "io.monix"                   %%% "monix"          % "3.0.0-RC1" % Test
     ),
   )
 

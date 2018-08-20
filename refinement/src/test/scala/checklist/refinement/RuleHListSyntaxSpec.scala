@@ -1,9 +1,10 @@
 package checklist.refinement
 
+import cats.Id
 import checklist._
 import checklist.Message._
 import org.scalatest._
-import cats.data.{NonEmptyList, Ior}
+import cats.data.{Ior, NonEmptyList}
 
 class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
   case class RawFoo(positive: Int, potentiallyEmptyList: List[String], untrimmed: String)
@@ -13,7 +14,7 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
     case class ValidatedFoo(positive: Int, nonEmptyList: NonEmptyList[String], trimmed: String)
     "with path" - {
       val rule =
-        Rule.builder[RawFoo]
+        Rule.builder[Id, RawFoo]
           .check("positive", _.positive)(Rule.gte(0, errors("negative")))
           .check("potentiallyEmptyList", _.potentiallyEmptyList)(Rule.nonEmptyList(errors("empty")))
           .check("untrimmed", _.untrimmed)(Rule.trimString)
@@ -34,7 +35,7 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
 
     "without path" - {
       val rule =
-        Rule.builder[RawFoo]
+        Rule.builder[Id, RawFoo]
           .check(_.positive)(Rule.gte(0, errors("negative")))
           .check(_.potentiallyEmptyList)(Rule.nonEmptyList(errors("empty")))
           .check(_.untrimmed)(Rule.trimString)
@@ -59,7 +60,7 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
     case class ValidatedFoo(nonEmptyList: NonEmptyList[String], trimmed: String)
     "with path" - {
       val rule =
-        Rule.builder[RawFoo]
+        Rule.builder[Id, RawFoo]
           .checkAndDrop("positive", _.positive)(Rule.gte(0, errors("negative")))
           .check("potentiallyEmptyList", _.potentiallyEmptyList)(Rule.nonEmptyList(errors("empty")))
           .check("untrimmed", _.untrimmed)(Rule.trimString)
@@ -80,7 +81,7 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
 
     "without path" - {
       val rule =
-        Rule.builder[RawFoo]
+        Rule.builder[Id, RawFoo]
           .checkAndDrop(_.positive)(Rule.gte(0, errors("negative")))
           .check(_.potentiallyEmptyList)(Rule.nonEmptyList(errors("empty")))
           .check(_.untrimmed)(Rule.trimString)
@@ -103,7 +104,7 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
 
   "append" - {
     case class Foo(n: Int)
-    val rule = Rule.builder[Unit].append(5).build[Foo]
+    val rule = Rule.builder[Id, Unit].append(5).build[Foo]
     "appends a value" in {
       rule(()) should be(Ior.Right(Foo(5)))
     }
@@ -112,7 +113,7 @@ class RuleBuilderSpec extends FreeSpec with Matchers with RuleHListSyntax {
   "pass" - {
     case class Foo(n: Int)
     case class Bar(n: Int)
-    val rule = Rule.builder[Foo].pass(_.n).build[Bar]
+    val rule = Rule.builder[Id, Foo].pass(_.n).build[Bar]
     "passes a value with no modification/validation" in {
       rule(Foo(5)) should be(Ior.Right(Bar(5)))
     }
