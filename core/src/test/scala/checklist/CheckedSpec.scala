@@ -2,17 +2,21 @@ package checklist
 
 import cats.data._
 import org.scalatest._
+import org.scalatest.wordspec._
+import org.scalatest.matchers.should._
 
-class CheckedSpec extends WordSpec with Matchers {
+class CheckedSpec extends AnyWordSpec with Matchers {
   import syntax._
 
-  val valueOnly   = Ior.right[Messages, Int](42)
-  val errorAnd    = Ior.both[Messages, Int](error("Fail"), 42)
-  val warningAnd  = Ior.both[Messages, Int](warning("Warn"), 42)
-  val bothAnd     = Ior.both[Messages, Int](error("Fail") ++ warning("Warn").toList, 42)
-  val errorOnly   = Ior.left[Messages, Int](error("Fail"))
+  val valueOnly = Ior.right[Messages, Int](42)
+  val errorAnd = Ior.both[Messages, Int](error("Fail"), 42)
+  val warningAnd = Ior.both[Messages, Int](warning("Warn"), 42)
+  val bothAnd =
+    Ior.both[Messages, Int](error("Fail") ++ warning("Warn").toList, 42)
+  val errorOnly = Ior.left[Messages, Int](error("Fail"))
   val warningOnly = Ior.left[Messages, Int](warning("Warn"))
-  val bothOnly    = Ior.left[Messages, Int](error("Fail") ++ warning("Warn").toList)
+  val bothOnly =
+    Ior.left[Messages, Int](error("Fail") ++ warning("Warn").toList)
 
   "checked.isValid" should {
     "only return true for a right" in {

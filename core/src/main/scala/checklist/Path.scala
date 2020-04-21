@@ -18,7 +18,7 @@ sealed abstract class Path {
     format.prefix(prefix, this)
 
   def ++(that: Path): Path = this match {
-    case PNil => that
+    case PNil                => that
     case PField(field, rest) => PField(field, rest ++ that)
     case PIndex(index, rest) => PIndex(index, rest ++ that)
   }
