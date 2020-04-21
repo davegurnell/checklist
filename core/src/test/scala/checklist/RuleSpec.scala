@@ -2,13 +2,16 @@ package checklist
 
 import cats.data.Ior
 import cats.implicits._
-import Sizeable._
-import org.scalatest._
 import monocle.macros.Lenses
+import org.scalatest._
+import org.scalatest.freespec._
+import org.scalatest.matchers.should._
+
+import Sizeable._
 import Rule._
 import Message._
 
-class BaseRuleSpec extends FreeSpec with Matchers {
+class BaseRuleSpec extends AnyFreeSpecLike with Matchers {
   "pass" in {
     val rule = Rule.pass[Int]
     rule(+1) should be(Ior.right(+1))
@@ -30,18 +33,18 @@ class BaseRuleSpec extends FreeSpec with Matchers {
   }
 }
 
-class ConverterRulesSpec extends FreeSpec with Matchers {
+class ConverterRulesSpec extends AnyFreeSpecLike with Matchers {
   "parseInt" in {
     val rule = parseInt
-    rule("abc")   should be(Ior.left(errors("Must be a whole number")))
-    rule("123")   should be(Ior.right(123))
+    rule("abc") should be(Ior.left(errors("Must be a whole number")))
+    rule("123") should be(Ior.right(123))
     rule("123.4") should be(Ior.left(errors("Must be a whole number")))
   }
 
   "parseDouble" in {
     val rule = parseDouble
-    rule("abc")   should be(Ior.left(errors("Must be a number")))
-    rule("123")   should be(Ior.right(123.0))
+    rule("abc") should be(Ior.left(errors("Must be a number")))
+    rule("123") should be(Ior.right(123.0))
     rule("123.4") should be(Ior.right(123.4))
   }
 
@@ -50,7 +53,9 @@ class ConverterRulesSpec extends FreeSpec with Matchers {
       val rule = mapValue[String, String]("foo")
       rule(Map.empty) should be(Ior.left(errors("foo" -> "Value not found")))
       rule(Map("foo" -> "bar")) should be(Ior.right("bar"))
-      rule(Map("baz" -> "bar")) should be(Ior.left(errors("foo" -> "Value not found")))
+      rule(Map("baz" -> "bar")) should be(
+        Ior.left(errors("foo" -> "Value not found"))
+      )
     }
 
     "int keys" in {
@@ -69,96 +74,95 @@ class ConverterRulesSpec extends FreeSpec with Matchers {
   }
 }
 
-class PropertyRulesSpec extends FreeSpec with Matchers {
-
+class PropertyRulesSpec extends AnyFreeSpecLike with Matchers {
   "non-strict" - {
     "eql" in {
       val rule = eql(0)
-      rule(0)  should be(Ior.right(0))
+      rule(0) should be(Ior.right(0))
       rule(+1) should be(Ior.both(errors("Must be 0"), +1))
       rule(-1) should be(Ior.both(errors("Must be 0"), -1))
     }
 
     "neq" in {
       val rule = neq(0)
-      rule(0)  should be(Ior.both(errors("Must not be 0"), 0))
+      rule(0) should be(Ior.both(errors("Must not be 0"), 0))
       rule(+1) should be(Ior.right(+1))
       rule(-1) should be(Ior.right(-1))
     }
 
     "lt" in {
       val rule = lt(0)
-      rule(0)  should be(Ior.both(errors("Must be less than 0"), 0))
-      rule(1)  should be(Ior.both(errors("Must be less than 0"), 1))
+      rule(0) should be(Ior.both(errors("Must be less than 0"), 0))
+      rule(1) should be(Ior.both(errors("Must be less than 0"), 1))
       rule(-1) should be(Ior.right(-1))
     }
 
     "lte" in {
       val rule = lte(0)
-      rule(0)  should be(Ior.right(0))
-      rule(1)  should be(Ior.both(errors("Must be less than or equal to 0"), 1))
+      rule(0) should be(Ior.right(0))
+      rule(1) should be(Ior.both(errors("Must be less than or equal to 0"), 1))
       rule(-1) should be(Ior.right(-1))
     }
 
     "gt" in {
       val rule = gt(0)
-      rule(0)  should be(Ior.both(errors("Must be greater than 0"), 0))
-      rule(1)  should be(Ior.right(1))
+      rule(0) should be(Ior.both(errors("Must be greater than 0"), 0))
+      rule(1) should be(Ior.right(1))
       rule(-1) should be(Ior.both(errors("Must be greater than 0"), -1))
     }
 
     "gte" in {
       val rule = gte(0)
-      rule(0)  should be(Ior.right(0))
-      rule(1)  should be(Ior.right(1))
+      rule(0) should be(Ior.right(0))
+      rule(1) should be(Ior.right(1))
       rule(-1) should be(Ior.both(errors("Must be greater than or equal to 0"), -1))
     }
 
     "nonEmpty" in {
       val rule = nonEmpty[String]
-      rule("")    should be(Ior.both(errors("Must not be empty"), ""))
-      rule(" ")   should be(Ior.right(" "))
+      rule("") should be(Ior.both(errors("Must not be empty"), ""))
+      rule(" ") should be(Ior.right(" "))
       rule(" a ") should be(Ior.right(" a "))
     }
 
-    "lengthLt"  in {
+    "lengthLt" in {
       val rule = lengthLt(5, errors("fail"))
 
-      rule("")      should be(Ior.right(""))
-      rule("abcd")  should be(Ior.right("abcd"))
+      rule("") should be(Ior.right(""))
+      rule("abcd") should be(Ior.right("abcd"))
       rule("abcde") should be(Ior.both(errors("fail"), "abcde"))
     }
 
     "lengthLte" in {
       val rule = lengthLte[String](5, errors("fail"))
 
-      rule("")       should be(Ior.right(""))
-      rule("abcde")  should be(Ior.right("abcde"))
+      rule("") should be(Ior.right(""))
+      rule("abcde") should be(Ior.right("abcde"))
       rule("abcdef") should be(Ior.both(errors("fail"), "abcdef"))
     }
 
     "lengthGt" in {
       val rule = lengthGt[String](1, errors("fail"))
 
-      rule("")   should be(Ior.both(errors("fail"), ""))
-      rule("a")  should be(Ior.both(errors("fail"), "a"))
+      rule("") should be(Ior.both(errors("fail"), ""))
+      rule("a") should be(Ior.both(errors("fail"), "a"))
       rule("ab") should be(Ior.right("ab"))
     }
 
     "lengthGte" in {
       val rule = lengthGte[String](2, errors("fail"))
 
-      rule("")   should be(Ior.both(errors("fail"), ""))
-      rule(" ")  should be(Ior.both(errors("fail"), " "))
-      rule("a")  should be(Ior.both(errors("fail"), "a"))
+      rule("") should be(Ior.both(errors("fail"), ""))
+      rule(" ") should be(Ior.both(errors("fail"), " "))
+      rule("a") should be(Ior.both(errors("fail"), "a"))
       rule("ab") should be(Ior.right("ab"))
     }
 
     "matchesRegex" in {
       val rule = matchesRegex("^[^@]+@[^@]+$".r)
-      rule("dave@example.com")  should be(Ior.right("dave@example.com"))
-      rule("dave@")             should be(Ior.both(errors("Must match the pattern '^[^@]+@[^@]+$'"), "dave@"))
-      rule("@example.com")      should be(Ior.both(errors("Must match the pattern '^[^@]+@[^@]+$'"), "@example.com"))
+      rule("dave@example.com") should be(Ior.right("dave@example.com"))
+      rule("dave@") should be(Ior.both(errors("Must match the pattern '^[^@]+@[^@]+$'"), "dave@"))
+      rule("@example.com") should be(Ior.both(errors("Must match the pattern '^[^@]+@[^@]+$'"), "@example.com"))
       rule("dave@@example.com") should be(Ior.both(errors("Must match the pattern '^[^@]+@[^@]+$'"), "dave@@example.com"))
     }
 
@@ -184,91 +188,91 @@ class PropertyRulesSpec extends FreeSpec with Matchers {
   "strict" - {
     "eqlStrict" in {
       val rule = eqlStrict(0)
-      rule(0)  should be(Ior.right(0))
+      rule(0) should be(Ior.right(0))
       rule(+1) should be(Ior.left(errors("Must be 0")))
       rule(-1) should be(Ior.left(errors("Must be 0")))
     }
 
     "neqStrict" in {
       val rule = neqStrict(0)
-      rule(0)  should be(Ior.left(errors("Must not be 0")))
+      rule(0) should be(Ior.left(errors("Must not be 0")))
       rule(+1) should be(Ior.right(+1))
       rule(-1) should be(Ior.right(-1))
     }
 
     "ltStrict" in {
       val rule = ltStrict(0)
-      rule(0)  should be(Ior.left(errors("Must be less than 0")))
-      rule(1)  should be(Ior.left(errors("Must be less than 0")))
+      rule(0) should be(Ior.left(errors("Must be less than 0")))
+      rule(1) should be(Ior.left(errors("Must be less than 0")))
       rule(-1) should be(Ior.right(-1))
     }
 
     "lteStrict" in {
       val rule = lteStrict(0)
-      rule(0)  should be(Ior.right(0))
-      rule(1)  should be(Ior.left(errors("Must be less than or equal to 0")))
+      rule(0) should be(Ior.right(0))
+      rule(1) should be(Ior.left(errors("Must be less than or equal to 0")))
       rule(-1) should be(Ior.right(-1))
     }
 
     "gtStrict" in {
       val rule = gtStrict(0)
-      rule(0)  should be(Ior.left(errors("Must be greater than 0")))
-      rule(1)  should be(Ior.right(1))
+      rule(0) should be(Ior.left(errors("Must be greater than 0")))
+      rule(1) should be(Ior.right(1))
       rule(-1) should be(Ior.left(errors("Must be greater than 0")))
     }
 
     "gteStrict" in {
       val rule = gteStrict(0)
-      rule(0)  should be(Ior.right(0))
-      rule(1)  should be(Ior.right(1))
+      rule(0) should be(Ior.right(0))
+      rule(1) should be(Ior.right(1))
       rule(-1) should be(Ior.left(errors("Must be greater than or equal to 0")))
     }
 
     "nonEmptyStrict" in {
       val rule = nonEmptyStrict[String]
-      rule("")    should be(Ior.left(errors("Must not be empty")))
-      rule(" ")   should be(Ior.right(" "))
+      rule("") should be(Ior.left(errors("Must not be empty")))
+      rule(" ") should be(Ior.right(" "))
       rule(" a ") should be(Ior.right(" a "))
     }
 
-    "lengthLt"  in {
+    "lengthLt" in {
       val rule = lengthLtStrict(5, errors("fail"))
 
-      rule("")      should be(Ior.right(""))
-      rule("abcd")  should be(Ior.right("abcd"))
+      rule("") should be(Ior.right(""))
+      rule("abcd") should be(Ior.right("abcd"))
       rule("abcde") should be(Ior.left(errors("fail")))
     }
 
     "lengthLteStrict" in {
       val rule = lengthLteStrict[String](5, errors("fail"))
 
-      rule("")       should be(Ior.right(""))
-      rule("abcde")  should be(Ior.right("abcde"))
+      rule("") should be(Ior.right(""))
+      rule("abcde") should be(Ior.right("abcde"))
       rule("abcdef") should be(Ior.left(errors("fail")))
     }
 
     "lengthGtStrict" in {
       val rule = lengthGtStrict[String](1, errors("fail"))
 
-      rule("")   should be(Ior.left(errors("fail")))
-      rule("a")  should be(Ior.left(errors("fail")))
+      rule("") should be(Ior.left(errors("fail")))
+      rule("a") should be(Ior.left(errors("fail")))
       rule("ab") should be(Ior.right("ab"))
     }
 
     "lengthGteStrict" in {
       val rule = lengthGteStrict[String](2, errors("fail"))
 
-      rule("")   should be(Ior.left(errors("fail")))
-      rule(" ")  should be(Ior.left(errors("fail")))
-      rule("a")  should be(Ior.left(errors("fail")))
+      rule("") should be(Ior.left(errors("fail")))
+      rule(" ") should be(Ior.left(errors("fail")))
+      rule("a") should be(Ior.left(errors("fail")))
       rule("ab") should be(Ior.right("ab"))
     }
 
     "matchesRegexStrict" in {
       val rule = matchesRegexStrict("^[^@]+@[^@]+$".r)
-      rule("dave@example.com")  should be(Ior.right("dave@example.com"))
-      rule("dave@")             should be(Ior.left(errors("Must match the pattern '^[^@]+@[^@]+$'")))
-      rule("@example.com")      should be(Ior.left(errors("Must match the pattern '^[^@]+@[^@]+$'")))
+      rule("dave@example.com") should be(Ior.right("dave@example.com"))
+      rule("dave@") should be(Ior.left(errors("Must match the pattern '^[^@]+@[^@]+$'")))
+      rule("@example.com") should be(Ior.left(errors("Must match the pattern '^[^@]+@[^@]+$'")))
       rule("dave@@example.com") should be(Ior.left(errors("Must match the pattern '^[^@]+@[^@]+$'")))
     }
 
@@ -292,16 +296,18 @@ class PropertyRulesSpec extends FreeSpec with Matchers {
   }
 }
 
-class CombinatorRulesSpec extends FreeSpec with Matchers {
+class CombinatorRulesSpec extends AnyFreeSpecLike with Matchers {
   "map" in {
-    val rule = Rule.gt[Int](0, errors("fail")).map(_ + "!")
+    val rule = Rule.gt[Int](0, errors("fail")).map(n => s"$n!")
     rule(+1) should be(Ior.right("1!"))
-    rule( 0) should be(Ior.both(errors("fail"), "0!"))
+    rule(0) should be(Ior.both(errors("fail"), "0!"))
     rule(-1) should be(Ior.both(errors("fail"), "-1!"))
   }
 
   "emap" in {
-    val rule = Rule.gt[Int](0, errors("fail")).emap(x => if(x % 2 == 0) Ior.right(x) else Ior.left(errors("mapFail")))
+    val rule = Rule
+      .gt[Int](0, errors("fail"))
+      .emap(x => if (x % 2 == 0) Ior.right(x) else Ior.left(errors("mapFail")))
 
     rule(-1) should be(Ior.left(errors("fail", "mapFail")))
     rule(0) should be(Ior.both(errors("fail"), 0))
@@ -310,7 +316,8 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
   }
 
   "mapMessages" in {
-    val rule = Rule.gt[Int](0, errors("fail")).mapMessages(_ => errors("mapped"))
+    val rule =
+      Rule.gt[Int](0, errors("fail")).mapMessages(_ => errors("mapped"))
 
     rule(0) should be(Ior.both(errors("mapped"), 0))
     rule(1) should be(Ior.right(1))
@@ -326,53 +333,50 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
   "contramap" in {
     val rule = Rule.gt[Int](0, errors("fail")).contramap[Int](_ + 1)
     rule(+1) should be(Ior.right(2))
-    rule( 0) should be(Ior.right(1))
+    rule(0) should be(Ior.right(1))
     rule(-1) should be(Ior.both(errors("fail"), 0))
   }
 
   "contramapPath" in {
-    val rule: Rule[Int, Int] = Rule.gt[Int](0, errors("fail")).contramapPath("n")(_ + 1)
+    val rule: Rule[Int, Int] =
+      Rule.gt[Int](0, errors("fail")).contramapPath("n")(_ + 1)
     rule(+1) should be(Ior.right(2))
-    rule( 0) should be(Ior.right(1))
+    rule(0) should be(Ior.right(1))
     rule(-1) should be(Ior.both(errors("fail").map(_.prefix("n")), 0))
   }
 
   "flatMap" in {
     val rule = for {
       a <- gte[Int](0, warnings("Should be >= 0"))
-      b <- if(a > 0) {
-             lt[Int](10, errors("Must be < 10"))
-           } else {
-             gt[Int](-10, errors("Must be > -10"))
-           }
+      b <- if (a > 0) lt[Int](10, errors("Must be < 10")) else gt[Int](-10, errors("Must be > -10"))
     } yield b
-    rule(  0) should be(Ior.right(0))
-    rule( 10) should be(Ior.both(errors("Must be < 10"), 10))
+    rule(0) should be(Ior.right(0))
+    rule(10) should be(Ior.both(errors("Must be < 10"), 10))
     rule(-10) should be(Ior.both(warnings("Should be >= 0") concatNel errors("Must be > -10"), -10))
   }
 
   "andThen" in {
     val rule = parseInt andThen gt(0)
     rule("abc") should be(Ior.left(errors("Must be a whole number")))
-    rule( "-1") should be(Ior.both(errors("Must be greater than 0"), -1))
-    rule(  "0") should be(Ior.both(errors("Must be greater than 0"), 0))
-    rule( "+1") should be(Ior.right(1))
+    rule("-1") should be(Ior.both(errors("Must be greater than 0"), -1))
+    rule("0") should be(Ior.both(errors("Must be greater than 0"), 0))
+    rule("+1") should be(Ior.right(1))
     rule("1.2") should be(Ior.left(errors("Must be a whole number")))
   }
 
   "zip" in {
     val rule = parseInt zip parseDouble
     rule("abc") should be(Ior.left(errors("Must be a whole number", "Must be a number")))
-    rule(  "1") should be(Ior.right((1, 1.0)))
+    rule("1") should be(Ior.right((1, 1.0)))
     rule("1.2") should be(Ior.left(errors("Must be a whole number")))
   }
 
   "prefix" in {
     val rule = parseInt andThen gt(0) prefix "num"
     rule("abc") should be(Ior.left(errors("num" -> "Must be a whole number")))
-    rule( "-1") should be(Ior.both(errors("num" -> "Must be greater than 0"), -1))
-    rule(  "0") should be(Ior.both(errors("num" -> "Must be greater than 0"), 0))
-    rule( "+1") should be(Ior.right(1))
+    rule("-1") should be(Ior.both(errors("num" -> "Must be greater than 0"), -1))
+    rule("0") should be(Ior.both(errors("num" -> "Must be greater than 0"), 0))
+    rule("+1") should be(Ior.right(1))
     rule("1.2") should be(Ior.left(errors("num" -> "Must be a whole number")))
   }
 
@@ -380,7 +384,7 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
     val l = monocle.Lens[(Int, Int), Int](p => p._1)(n => p => (n, p._2))
     val r = monocle.Lens[(Int, Int), Int](p => p._2)(n => p => (p._1, n))
     val rule = (lt(0) composeLens l) andThen (gt(0) composeLens r)
-    rule(( 0,  0)) should be(Ior.both(errors("Must be less than 0", "Must be greater than 0"), (0, 0)))
+    rule((0, 0)) should be(Ior.both(errors("Must be less than 0", "Must be greater than 0"), (0, 0)))
     rule((+1, +1)) should be(Ior.both(errors("Must be less than 0"), (1, 1)))
     rule((-1, -1)) should be(Ior.both(errors("Must be greater than 0"), (-1, -1)))
     rule((+1, -1)) should be(Ior.both(errors("Must be less than 0", "Must be greater than 0"), (1, -1)))
@@ -391,7 +395,7 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
     val l = monocle.Lens[(Int, Int), Int](p => p._1)(n => p => (n, p._2))
     val r = monocle.Lens[(Int, Int), Int](p => p._2)(n => p => (p._1, n))
     val rule = lt(0).at("l", l) andThen gt(0).at("r", r)
-    rule(( 0,  0)) should be(Ior.both(errors("l" -> "Must be less than 0", "r" -> "Must be greater than 0"), (0, 0)))
+    rule((0, 0)) should be(Ior.both(errors("l" -> "Must be less than 0", "r" -> "Must be greater than 0"), (0, 0)))
     rule((+1, +1)) should be(Ior.both(errors("l" -> "Must be less than 0"), (1, 1)))
     rule((-1, -1)) should be(Ior.both(errors("r" -> "Must be greater than 0"), (-1, -1)))
     rule((+1, -1)) should be(Ior.both(errors("l" -> "Must be less than 0", "r" -> "Must be greater than 0"), (1, -1)))
@@ -399,7 +403,7 @@ class CombinatorRulesSpec extends FreeSpec with Matchers {
   }
 }
 
-class CollectionRuleSpec extends FreeSpec with Matchers {
+class CollectionRuleSpec extends AnyFreeSpecLike with Matchers {
   "sequence" in {
     import cats.instances.list._
     val rule = eql("ok").seq[List]
@@ -412,20 +416,20 @@ class CollectionRuleSpec extends FreeSpec with Matchers {
 
   "optional" in {
     val rule = optional(eql("ok"))
-    rule(None)       should be(Ior.right(None))
+    rule(None) should be(Ior.right(None))
     rule(Some("ok")) should be(Ior.right(Some("ok")))
     rule(Some("no")) should be(Ior.both(errors("Must be ok"), Some("no")))
   }
 
   "required" in {
     val rule = required(eql(0))
-    rule(None)    should be(Ior.left(errors("Value is required")))
+    rule(None) should be(Ior.left(errors("Value is required")))
     rule(Some(0)) should be(Ior.right(0))
     rule(Some(1)) should be(Ior.both(errors("Must be 0"), 1))
   }
 }
 
-class CatsRuleSpec extends FreeSpec with Matchers {
+class CatsRuleSpec extends AnyFreeSpecLike with Matchers {
   import cats.data._
   import cats.syntax.all._
 
@@ -435,28 +439,26 @@ class CatsRuleSpec extends FreeSpec with Matchers {
     pure(_.get(name).map(Ior.right).getOrElse(Ior.left(errors(s"Field not found: ${name}"))))
 
   val parseAddress =
-    ((getField("house")  andThen parseInt andThen gt(0)), (getField("street") andThen nonEmpty))
-      .mapN (Address.apply)
-
+    (
+      (getField("house") andThen parseInt andThen gt(0)),
+      (getField("street") andThen nonEmpty)
+    ).mapN(Address.apply)
 
   def runTests(f: Map[String, String] => Checked[Address]) = {
     "good data" in {
-      val actual = parseAddress(Map(
-        "house"  -> "29",
-        "street" -> "Acacia Road"
-      ))
+      val actual = parseAddress(Map("house" -> "29", "street" -> "Acacia Road"))
       val expected = Ior.right(Address(29, "Acacia Road"))
       actual should be(expected)
     }
 
     "empty data" in {
-      val actual   = parseAddress(Map.empty[String, String])
+      val actual = parseAddress(Map.empty[String, String])
       val expected = Ior.left(errors("Field not found: house", "Field not found: street"))
       actual should be(expected)
     }
 
     "bad fields" in {
-      val actual   = parseAddress(Map("house" -> "-1", "street" -> ""))
+      val actual = parseAddress(Map("house" -> "-1", "street" -> ""))
       val expected = Ior.both(errors("Must be greater than 0", "Must not be empty"), Address(-1, ""))
       actual should be(expected)
     }
@@ -474,7 +476,7 @@ class CatsRuleSpec extends FreeSpec with Matchers {
   }
 }
 
-class Rule1SyntaxSpec extends FreeSpec with Matchers {
+class Rule1SyntaxSpec extends AnyFreeSpecLike with Matchers {
   @Lenses case class Coord(x: Int, y: Int)
 
   case class Bar(baz: Int)

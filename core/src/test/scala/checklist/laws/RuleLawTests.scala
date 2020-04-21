@@ -2,10 +2,11 @@ package checklist.laws
 
 import cats.laws.discipline.arbitrary._
 import cats.laws.discipline.{ApplicativeTests, ProfunctorTests}
-import cats.tests.CatsSuite
+import cats.implicits._
 import checklist._
+import cats.laws.discipline.MiniInt
 
 class RuleLawTests extends CatsSuite {
-  checkAll("Rule[Int, String]", ApplicativeTests[Rule[Int, ?]].applicative[String, String, String])
-  checkAll("Rule[Int, String]", ProfunctorTests[Rule].profunctor[Int, Int, Int, String, String, String])
+  checkAll("Rule[Int, String]", ApplicativeTests[Rule[MiniInt, ?]].applicative[String, String, String])
+  checkAll("Rule[Int, String]", ProfunctorTests[Rule].profunctor[MiniInt, Int, Int, String, String, String])
 }

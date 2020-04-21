@@ -6,6 +6,7 @@ import cats.implicits._
 import cats.laws.discipline.arbitrary._
 import cats.laws.discipline.eq._
 import org.scalacheck.Arbitrary
+import cats.laws.discipline.ExhaustiveCheck
 
 package object laws extends CatsInstances with ScalacheckInstances
 
@@ -49,6 +50,6 @@ trait ScalacheckInstances {
 }
 
 trait CatsInstances {
-  implicit def ruleEq[A: Arbitrary, B: Eq]: Eq[Rule[A, B]] =
-    catsLawsEqForFn1[A, Checked[B]].contramap[Rule[A, B]](rule => rule.apply _)
+  implicit def ruleEq[A: Arbitrary: ExhaustiveCheck, B: Eq]: Eq[Rule[A, B]] =
+    catsLawsEqForFn1Exhaustive[A, Checked[B]].contramap[Rule[A, B]](rule => rule.apply _)
 }

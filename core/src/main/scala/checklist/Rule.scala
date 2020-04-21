@@ -5,7 +5,6 @@ import cats.data.{Ior, Kleisli}
 import cats.implicits._
 import monocle.PLens
 
-import scala.language.higherKinds
 import scala.util.matching.Regex
 import Message.errors
 import cats.arrow.Profunctor
@@ -13,25 +12,26 @@ import cats.data.NonEmptyList
 import checklist.SizeableSyntax._
 
 /**
- * A Rule validates/sanitizes a value of type `A` producing a type `B` inside an `Ior[NonEmptyList[Messages], B]`
- *
- * @tparam A The type to be validated
- * @tparam B The type to be produced
- */
+  * A Rule validates/sanitizes a value of type `A` producing a type `B` inside an `Ior[NonEmptyList[Messages], B]`
+  *
+  * @tparam A The type to be validated
+  * @tparam B The type to be produced
+  */
 sealed abstract class Rule[A, B] {
+
   /**
-   * Performs validation on `A`
-   *
-   * @tparam A The value to be validated
-   */
+    * Performs validation on `A`
+    *
+    * @tparam A The value to be validated
+    */
   def apply(value: A): Checked[B]
 
   def map[C](func: B => C): Rule[A, C] =
     Rule.pure(value => this(value) map func)
 
   /**
-   * Maps the result type with the potential for a failure to occur.
-   */
+    * Maps the result type with the potential for a failure to occur.
+    */
   def emap[C](func: B => Checked[C]): Rule[A, C] =
     Rule.pure(value => this(value) flatMap func)
 
@@ -39,7 +39,13 @@ sealed abstract class Rule[A, B] {
     Rule.pure(value => this(value).fold(func, Ior.right, Ior.both))
 
   def mapMessages(func: Messages => Messages): Rule[A, B] =
-    Rule.pure(value => this(value).fold(func andThen Ior.left, Ior.right, (msgs, r) => Ior.both(func(msgs), r)))
+    Rule.pure(value =>
+      this(value).fold(
+        func andThen Ior.left,
+        Ior.right,
+        (msgs, r) => Ior.both(func(msgs), r)
+      )
+    )
 
   def mapEachMessage(func: Message => Message): Rule[A, B] =
     mapMessages(_.map(func))
@@ -101,12 +107,13 @@ sealed abstract class Rule[A, B] {
   def kleisli: Kleisli[Checked, A, B] = Kleisli(apply)
 }
 
-object Rule extends BaseRules
-  with ConverterRules
-  with PropertyRules
-  with CollectionRules
-  with RuleInstances
-  with Rule1Syntax
+object Rule
+    extends BaseRules
+    with ConverterRules
+    with PropertyRules
+    with CollectionRules
+    with RuleInstances
+    with Rule1Syntax
 
 trait BaseRules {
   def apply[A]: Rule[A, A] =
@@ -118,7 +125,8 @@ trait BaseRules {
         func(value)
     }
 
-  def fromKleisli[A, B](func: Kleisli[Checked, A, B]): Rule[A, B] = pure(func.apply)
+  def fromKleisli[A, B](func: Kleisli[Checked, A, B]): Rule[A, B] =
+    pure(func.apply)
 
   def pass[A]: Rule[A, A] =
     pure(Ior.right)
@@ -135,13 +143,25 @@ trait ConverterRules {
     parseInt(errors("Must be a whole number"))
 
   def parseInt(messages: Messages): Rule[String, Int] =
-    pure(value => util.Try(value.toInt).toOption.map(Ior.right).getOrElse(Ior.left(messages)))
+    pure(value =>
+      util
+        .Try(value.toInt)
+        .toOption
+        .map(Ior.right)
+        .getOrElse(Ior.left(messages))
+    )
 
   val parseDouble: Rule[String, Double] =
     parseDouble(errors("Must be a number"))
 
   def parseDouble(messages: Messages): Rule[String, Double] =
-    pure(value => util.Try(value.toDouble).toOption.map(Ior.right).getOrElse(Ior.left(messages)))
+    pure(value =>
+      util
+        .Try(value.toDouble)
+        .toOption
+        .map(Ior.right)
+        .getOrElse(Ior.left(messages))
+    )
 
   val trimString: Rule[String, String] =
     pure(value => Ior.right(value.trim))
@@ -151,11 +171,16 @@ trait ConverterRules {
 trait PropertyRules {
   self: BaseRules =>
 
-  def test[A](messages: => Messages, strict: Boolean = false)(func: A => Boolean): Rule[A, A] =
-    pure(value => if(func(value)) Ior.right(value) else {
-      if(strict) Ior.left(messages)
-      else Ior.both(messages, value)
-    })
+  def test[A](messages: => Messages, strict: Boolean = false)(
+      func: A => Boolean
+  ): Rule[A, A] =
+    pure(value =>
+      if (func(value)) Ior.right(value)
+      else {
+        if (strict) Ior.left(messages)
+        else Ior.both(messages, value)
+      }
+    )
 
   def testStrict[A](messages: => Messages)(func: A => Boolean): Rule[A, A] =
     test(messages, true)(func)
@@ -187,49 +212,65 @@ trait PropertyRules {
   def gt[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     gt(comp, errors(s"Must be greater than ${comp}"))
 
-  def gt[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def gt[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     test(messages)(ord.gt(_, comp))
 
   def gtStrict[A](comp: A)(implicit ord: Ordering[A]): Rule[A, A] =
     gtStrict(comp, errors(s"Must be greater than ${comp}"))
 
-  def gtStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def gtStrict[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     testStrict(messages)(ord.gt(_, comp))
 
   def lt[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     lt(comp, errors(s"Must be less than ${comp}"))
 
-  def lt[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def lt[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     test(messages)(ord.lt(_, comp))
 
   def ltStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     ltStrict(comp, errors(s"Must be less than ${comp}"))
 
-  def ltStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def ltStrict[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     testStrict(messages)(ord.lt(_, comp))
 
   def gte[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     gte(comp, errors(s"Must be greater than or equal to ${comp}"))
 
-  def gte[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def gte[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     test(messages)(ord.gteq(_, comp))
 
   def gteStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     gteStrict(comp, errors(s"Must be greater than or equal to ${comp}"))
 
-  def gteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def gteStrict[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     testStrict(messages)(ord.gteq(_, comp))
 
   def lte[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     lte(comp, errors(s"Must be less than or equal to ${comp}"))
 
-  def lte[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def lte[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     test(messages)(ord.lteq(_, comp))
 
   def lteStrict[A](comp: A)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
     lteStrict(comp, errors(s"Must be less than or equal to ${comp}"))
 
-  def lteStrict[A](comp: A, messages: Messages)(implicit ord: Ordering[_ >: A]): Rule[A, A] =
+  def lteStrict[A](comp: A, messages: Messages)(
+      implicit ord: Ordering[_ >: A]
+  ): Rule[A, A] =
     testStrict(messages)(ord.lteq(_, comp))
 
   def nonEmpty[S: Monoid]: Rule[S, S] =
@@ -309,7 +350,7 @@ trait PropertyRules {
 
   def nonEmptyList[A](messages: Messages): Rule[List[A], NonEmptyList[A]] =
     Rule.pure {
-      case Nil => Ior.left(messages)
+      case Nil    => Ior.left(messages)
       case h :: t => Ior.right(NonEmptyList(h, t))
     }
 
@@ -322,29 +363,44 @@ trait PropertyRules {
   def matchesRegexStrict(regex: Regex): Rule[String, String] =
     matchesRegexStrict(regex, errors(s"Must match the pattern '${regex}'"))
 
-  def matchesRegexStrict(regex: Regex, messages: Messages): Rule[String, String] =
+  def matchesRegexStrict(
+      regex: Regex,
+      messages: Messages
+  ): Rule[String, String] =
     testStrict(messages)(regex.findFirstIn(_).isDefined)
 
   def containedIn[A](values: Seq[A]): Rule[A, A] =
-    containedIn(values, errors(s"Must be one of the values ${values.mkString(", ")}"))
+    containedIn(
+      values,
+      errors(s"Must be one of the values ${values.mkString(", ")}")
+    )
 
   def containedIn[A](values: Seq[A], messages: Messages): Rule[A, A] =
     test(messages)(value => values contains value)
 
   def containedInStrict[A](values: Seq[A]): Rule[A, A] =
-    containedInStrict(values, errors(s"Must be one of the values ${values.mkString(", ")}"))
+    containedInStrict(
+      values,
+      errors(s"Must be one of the values ${values.mkString(", ")}")
+    )
 
   def containedInStrict[A](values: Seq[A], messages: Messages): Rule[A, A] =
     testStrict(messages)(value => values contains value)
 
   def notContainedIn[A](values: Seq[A]): Rule[A, A] =
-    notContainedIn(values, errors(s"Must not be one of the values ${values.mkString(", ")}"))
+    notContainedIn(
+      values,
+      errors(s"Must not be one of the values ${values.mkString(", ")}")
+    )
 
   def notContainedIn[A](values: Seq[A], messages: Messages): Rule[A, A] =
     test(messages)(value => !(values contains value))
 
   def notContainedInStrict[A](values: Seq[A]): Rule[A, A] =
-    notContainedInStrict(values, errors(s"Must not be one of the values ${values.mkString(", ")}"))
+    notContainedInStrict(
+      values,
+      errors(s"Must not be one of the values ${values.mkString(", ")}")
+    )
 
   def notContainedInStrict[A](values: Seq[A], messages: Messages): Rule[A, A] =
     testStrict(messages)(value => !(values contains value))
@@ -368,20 +424,30 @@ trait CollectionRules {
       case None        => Ior.left(messages)
     }
 
-  def sequence[S[_] : Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
+  def sequence[S[_]: Traverse, A, B](rule: Rule[A, B]): Rule[S[A], S[B]] =
     pure { values =>
       values.traverseWithIndexM { (value, index) =>
-          rule.prefix(index).apply(value)
+        rule.prefix(index).apply(value)
       }
     }
 
   def mapValue[A: PathPrefix, B](key: A): Rule[Map[A, B], B] =
     mapValue[A, B](key, errors(s"Value not found"))
 
-  def mapValue[A: PathPrefix, B](key: A, messages: Messages): Rule[Map[A, B], B] =
-    pure(map => map.get(key).map(Ior.right).getOrElse(Ior.left(messages map (_ prefix key))))
+  def mapValue[A: PathPrefix, B](
+      key: A,
+      messages: Messages
+  ): Rule[Map[A, B], B] =
+    pure(map =>
+      map
+        .get(key)
+        .map(Ior.right)
+        .getOrElse(Ior.left(messages map (_ prefix key)))
+    )
 
-  def mapValues[A: PathPrefix, B, C](rule: Rule[B, C]): Rule[Map[A, B], Map[A, C]] =
+  def mapValues[A: PathPrefix, B, C](
+      rule: Rule[B, C]
+  ): Rule[Map[A, B], Map[A, C]] =
     pure { in: Map[A, B] =>
       in.toList.traverse {
         case (key, value) =>
@@ -408,13 +474,18 @@ trait RuleInstances {
       override def map[B, C](rule: Rule[A, B])(func: B => C): Rule[A, C] =
         rule map func
 
-      override def product[B, C](rule1: Rule[A, B], rule2: Rule[A, C]): Rule[A, (B, C)] =
+      override def product[B, C](
+          rule1: Rule[A, B],
+          rule2: Rule[A, C]
+      ): Rule[A, (B, C)] =
         rule1 zip rule2
     }
 
   implicit val ruleProfunctor: Profunctor[Rule] =
     new Profunctor[Rule] {
-      override def dimap[A, B, C, D](fab: Rule[A, B])(f: (C) => A)(g: (B) => D) =
+      override def dimap[A, B, C, D](
+          fab: Rule[A, B]
+      )(f: (C) => A)(g: (B) => D) =
         fab.contramap(f).map(g)
     }
 }

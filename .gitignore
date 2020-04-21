@@ -1,90 +1,74 @@
-# Created by https://www.gitignore.io
 
-### Scala ###
-*.class
-*.log
+# Created by https://www.gitignore.io/api/scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext
+# Edit at https://www.gitignore.io/?templates=scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext
 
-# sbt specific
-.cache
-.history
-.lib/
+### Bloop ###
+.bloop/
+
+#!! ERROR: intellj is undefined. Use list command to see defined gitignore types !!#
+
+### Metals ###
+.metals/
+
+### SBT ###
+# Simple Build Tool
+# http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
+
 dist/*
 target/
 lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
+.history
+.cache
+.lib/
 
-# Scala-IDE specific
-.scala_dependencies
-.worksheet
-
-# ENSIME specific
-.ensime
-.ensime_cache
-
-### Intellij ###
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
-
-*.iml
-
-## Directory-based project format:
-.idea/
-# if you remove the above rule, at least ignore the following:
-
-# User-specific stuff:
-# .idea/workspace.xml
-# .idea/tasks.xml
-# .idea/dictionaries
-
-# Sensitive or high-churn files:
-# .idea/dataSources.ids
-# .idea/dataSources.xml
-# .idea/sqlDataSources.xml
-# .idea/dynamic.xml
-# .idea/uiDesigner.xml
-
-# Gradle:
-# .idea/gradle.xml
-# .idea/libraries
-
-# Mongo Explorer plugin:
-# .idea/mongoSettings.xml
-
-## File-based project format:
-*.ipr
-*.iws
-
-## Plugin-specific files:
-
-# IntelliJ
-/out/
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# JIRA plugin
-atlassian-ide-plugin.xml
-
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-
+### Scala ###
+*.class
+*.log
+*.metals
 
 ### SublimeText ###
-# cache files for sublime text
+# Cache files for Sublime Text
 *.tmlanguage.cache
 *.tmPreferences.cache
 *.stTheme.cache
 
-# workspace files are user-specific
+# Workspace files are user-specific
 *.sublime-workspace
 
-# project files should be checked into the repository, unless a significant
-# proportion of contributors will probably not be using SublimeText
+# Project files should be checked into the repository, unless a significant
+# proportion of contributors will probably not be using Sublime Text
 # *.sublime-project
 
-# sftp configuration file
+# SFTP configuration file
 sftp-config.json
 
+# Package control specific files
+Package Control.last-run
+Package Control.ca-list
+Package Control.ca-bundle
+Package Control.system-ca-bundle
+Package Control.cache/
+Package Control.ca-certs/
+Package Control.merged-ca-bundle
+Package Control.user-ca-bundle
+oscrypto-ca-bundle.crt
+bh_unicode_properties.cache
+
+# Sublime-github package stores a github token in this file
+# https://packagecontrol.io/packages/sublime-github
+GitHub.sublime-settings
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+
+# End of https://www.gitignore.io/api/scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext

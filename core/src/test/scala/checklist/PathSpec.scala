@@ -1,8 +1,10 @@
 package checklist
 
 import org.scalatest._
+import org.scalatest.freespec._
+import org.scalatest.matchers.should._
 
-class PathSpec extends FreeSpec with Matchers {
+class PathSpec extends AnyFreeSpec with Matchers {
   "path.pathString" - {
     "empty path" in {
       PNil.pathString should be("")
@@ -25,7 +27,9 @@ class PathSpec extends FreeSpec with Matchers {
     }
 
     "interleaved fields and indices" in {
-      ("a" :: "b" :: 3 :: "c" :: 4 :: 5 :: "d" :: PNil).pathString should be("a/b/3/c/4/5/d")
+      ("a" :: "b" :: 3 :: "c" :: 4 :: 5 :: "d" :: PNil).pathString should be(
+        "a/b/3/c/4/5/d"
+      )
     }
   }
 }
