@@ -1,11 +1,43 @@
 
-# Created by https://www.gitignore.io/api/scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext
-# Edit at https://www.gitignore.io/?templates=scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext
+# Created by https://www.gitignore.io/api/scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext,direnv,macos
+# Edit at https://www.gitignore.io/?templates=scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext,direnv,macos
 
 ### Bloop ###
 .bloop/
 
+### direnv ###
+.direnv
+.envrc
+
 #!! ERROR: intellj is undefined. Use list command to see defined gitignore types !!#
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
 ### Metals ###
 .metals/
@@ -71,4 +103,4 @@ GitHub.sublime-settings
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 
-# End of https://www.gitignore.io/api/scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext
+# End of https://www.gitignore.io/api/scala,sbt,metals,bloop,visualstudiocode,intellj,sublimetext,direnv,macos
