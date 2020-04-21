@@ -29,6 +29,19 @@ libraryDependencies += "com.davegurnell" %% "checklist-refinement" % "<<VERSION>
 libraryDependencies += "com.davegurnell" %%% "checklist-refinement" % "<<VERSION>>"
 ```
 
+## Publishing It
+
+These are some notes-to-self about publishing until I get around to automating it:
+
+- Release by running the `release` command.
+
+- The `gpg` command line seems to ignore the `--passphrase` switch supplied by sbt-pgp.
+  No settings in SBT will work around this. GPG passphrase entry has to be manual.
+
+- `gpg` puts a fancy dialog on-screen for password entry, which as two knock-on effects:
+  - it requires an environment variable called `GPG_TTY` that I've set using `direnv` (`export GPG_TTY=$(tty)`);
+  - it is messed up by SBT Super Shell, so I've disabled it in `build.sbt`.
+
 ## Synopsis
 
 Checklist is a library for validating data in applications and inputs to applications.
