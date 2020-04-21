@@ -1,5 +1,5 @@
 organization in ThisBuild := "com.davegurnell"
-version in ThisBuild := "0.5.1"
+version in ThisBuild := "0.6.0"
 
 scalaVersion in ThisBuild := "2.13.1"
 crossScalaVersions in ThisBuild := Seq("2.12.11", "2.13.1")
