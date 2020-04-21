@@ -173,7 +173,7 @@ def scalacVersionOptions(scalaVersion: String) =
 def sonatypeSettings(libraryName: String) =
   Seq(
     name := libraryName,
-    publishTo := sonatypePublishTo.value,
+    publishTo := sonatypePublishToBundle.value,
     publishMavenStyle := true,
     pgpSigningKey in Global := Some("135FD0333AE88741B7E77F9E95A20BD4B1E66089"),
     licenses += ("Apache-2.0", url("http://apache.org/licenses/LICENSE-2.0")),
