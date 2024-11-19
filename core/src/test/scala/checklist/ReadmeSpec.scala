@@ -1,14 +1,13 @@
 package checklist
 
 import cats.data.Ior
-import cats.implicits._
-import org.scalatest._
-import org.scalatest.freespec._
-import org.scalatest.matchers.should._
+import cats.implicits.*
+import org.scalatest.freespec.*
+import org.scalatest.matchers.should.*
 
 class ReadmeSpec extends AnyFreeSpec with Matchers {
-  import Rule._
-  import Message._
+  import Message.*
+  import Rule.*
 
   case class Address(house: Int, street: String)
   case class Person(name: String, age: Int, address: Address)
@@ -51,9 +50,9 @@ class ReadmeSpec extends AnyFreeSpec with Matchers {
       personRule(invalid) should be(
         Ior.both(
           errors(
-            ("name" :: PNil) -> "Must not be empty",
-            ("age" :: PNil) -> "Must be greater than or equal to 1",
-            ("address" :: "house" :: PNil) -> "Must be greater than or equal to 1",
+            ("name" :: PNil)                -> "Must not be empty",
+            ("age" :: PNil)                 -> "Must be greater than or equal to 1",
+            ("address" :: "house" :: PNil)  -> "Must be greater than or equal to 1",
             ("address" :: "street" :: PNil) -> "Must not be empty"
           ),
           invalid

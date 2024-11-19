@@ -1,8 +1,7 @@
 package checklist
 
-import org.scalatest._
-import org.scalatest.freespec._
-import org.scalatest.matchers.should._
+import org.scalatest.freespec.*
+import org.scalatest.matchers.should.*
 
 class PathSpec extends AnyFreeSpec with Matchers {
   "path.pathString" - {

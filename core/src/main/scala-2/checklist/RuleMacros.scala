@@ -3,20 +3,21 @@ package checklist
 import scala.reflect.macros.blackbox
 
 class RuleMacros(val c: blackbox.Context) {
-  import c.universe._
+
+  import c.universe.*
 
   def field[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(rule: c.Tree): c.Tree = {
     val q"($param) => $rhs" = accessor
-    val a = weakTypeOf[A]
-    val b = weakTypeOf[B]
-    val path = accessorPrefix(accessor)
-    val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
+    val a                   = weakTypeOf[A]
+    val b                   = weakTypeOf[B]
+    val path                = accessorPrefix(accessor)
+    val lens                = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
     q"${c.prefix}.field($path, $lens)($rule)"
   }
 
   def fieldWith[A: c.WeakTypeTag, B: c.WeakTypeTag](accessor: c.Tree)(builder: c.Tree): c.Tree = {
-    val a = weakTypeOf[A]
-    val b = weakTypeOf[B]
+    val a    = weakTypeOf[A]
+    val b    = weakTypeOf[B]
     val path = accessorPrefix(accessor)
     val lens = q"""monocle.macros.GenLens[$a].apply[$b]($accessor)"""
     q"${c.prefix}.fieldWith($path, $lens)($builder)"
@@ -28,7 +29,7 @@ class RuleMacros(val c: blackbox.Context) {
     @scala.annotation.tailrec
     def unpack(expr: Tree, accum: List[String]): Tree =
       expr match {
-        case Ident(_)               => accum.foldRight(q"_root_.checklist.PNil" : Tree)((a, b) => q"$a :: $b")
+        case Ident(_)               => accum.foldRight(q"_root_.checklist.PNil": Tree)((a, b) => q"$a :: $b")
         case Select(a, TermName(b)) => unpack(a, b :: accum)
         case _                      => fail
       }
@@ -41,10 +42,10 @@ class RuleMacros(val c: blackbox.Context) {
 
   private def errorMessage(prefix: String) =
     s"""
-     |$prefix
-     |
-     |The argument must be a function literal of the form `_.field`.
-     |Alternatively use the `rule.field(path, lens)(rule)` method,
-     |which allows you to specify the field name manually.
+       |$prefix
+       |
+       |The argument must be a function literal of the form `_.field`.
+       |Alternatively use the `rule.field(path, lens)(rule)` method,
+       |which allows you to specify the field name manually.
      """.stripMargin
 }

@@ -1,9 +1,8 @@
 package checklist
 
-import cats.implicits._
-import org.scalatest._
-import org.scalatest.freespec._
-import org.scalatest.matchers.should._
+import cats.implicits.*
+import org.scalatest.freespec.*
+import org.scalatest.matchers.should.*
 
 class SizeableSpec extends AnyFreeSpec with Matchers {
   "Sizeable Foldable" in {

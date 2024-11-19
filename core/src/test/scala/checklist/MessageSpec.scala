@@ -1,14 +1,13 @@
 package checklist
 
-import cats.data._
-import org.scalatest._
-import org.scalatest.wordspec._
-import org.scalatest.matchers.should._
+import cats.data.*
+import org.scalatest.matchers.should.*
+import org.scalatest.wordspec.*
 
 class MessageSpec extends AnyWordSpec with Matchers {
   "errors helper" should {
     "create a single error" in {
-      val actual = Message.errors("message")
+      val actual   = Message.errors("message")
       val expected = NonEmptyList.of(ErrorMessage("message"))
       actual should be(expected)
     }
@@ -23,7 +22,7 @@ class MessageSpec extends AnyWordSpec with Matchers {
 
   "warnings helper" should {
     "create a single warning" in {
-      val actual = Message.warnings("message")
+      val actual   = Message.warnings("message")
       val expected = NonEmptyList.of(WarningMessage("message"))
       actual should be(expected)
     }
