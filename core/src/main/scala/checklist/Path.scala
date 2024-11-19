@@ -11,10 +11,10 @@ sealed abstract class Path {
     case PIndex(head, tail) => s"$head/${tail.pathString}"
   }
 
-  def prefix[A](prefix: A)(implicit format: PathPrefix[A]) =
+  def prefix[A](prefix: A)(implicit format: PathPrefix[A]): Path =
     format.prefix(prefix, this)
 
-  def ::[A](prefix: A)(implicit format: PathPrefix[A]) =
+  def ::[A](prefix: A)(implicit format: PathPrefix[A]): Path =
     format.prefix(prefix, this)
 
   def ++(that: Path): Path = this match {
@@ -67,11 +67,11 @@ object PathPrefix {
 }
 
 trait PathInstances {
-  import cats.instances.string._
+  import cats.instances.string.*
   implicit val pathOrder: Order[Path] = Order.by[Path, String](_.pathString)
   implicit val pathMonoid: Monoid[Path] =
     new Monoid[Path] {
-      override def empty = PNil
-      override def combine(x: Path, y: Path) = x ++ y
+      override def empty: Path = PNil
+      override def combine(x: Path, y: Path): Path = x ++ y
     }
 }

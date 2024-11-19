@@ -1,24 +1,23 @@
 package checklist.refinement
 
-import checklist._
-import checklist.Message._
-import cats.data.{NonEmptyList, Ior}
-import org.scalatest._
-import org.scalatest.freespec._
-import org.scalatest.matchers.should._
+import cats.data.{Ior, NonEmptyList}
+import checklist.*
+import checklist.Message.*
+import org.scalatest.freespec.*
+import org.scalatest.matchers.should.Matchers
 
 class RuleBuilderSpec extends AnyFreeSpec with Matchers with RuleHListSyntax {
   case class RawFoo(
-      positive: Int,
-      potentiallyEmptyList: List[String],
-      untrimmed: String
+    positive:             Int,
+    potentiallyEmptyList: List[String],
+    untrimmed:            String
   )
 
   "check" - {
     case class ValidatedFoo(
-        positive: Int,
-        nonEmptyList: NonEmptyList[String],
-        trimmed: String
+      positive:     Int,
+      nonEmptyList: NonEmptyList[String],
+      trimmed:      String
     )
     "with path" - {
       val rule =

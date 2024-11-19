@@ -1,6 +1,8 @@
 package checklist
 
-import monocle._
+import monocle.Lens
+
+import scala.language.experimental.macros
 
 trait Rule1Syntax {
   implicit class AnyRuleOps[A](value: A) {
