@@ -2,8 +2,6 @@ package checklist
 
 import monocle.Lens
 
-import scala.language.experimental.macros
-
 trait Rule1Syntax {
   implicit class AnyRuleOps[A](value: A) {
     def validate(implicit rule: Rule[A, A]): Checked[A] =
