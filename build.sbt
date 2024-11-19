@@ -9,6 +9,9 @@ ThisBuild / scalacOptions ++= scalacVersionOptions((Compile / scalaVersion).valu
 
 enablePlugins(ScalaJSPlugin)
 
+// Super Shell interferes with GPG passphrase entry, which I CAN'T DISABLE for some reason :|
+useSuperShell in ThisBuild := false
+
 // shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
 //import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
@@ -119,24 +122,20 @@ def scalacVersionOptions(scalaVersion: String) =
 def sonatypeSettings(libraryName: String) =
   Seq(
     name := libraryName,
-    publishTo := sonatypePublishTo.value,
+    publishTo := sonatypePublishToBundle.value,
     publishMavenStyle := true,
+    pgpSigningKey in Global := Some("135FD0333AE88741B7E77F9E95A20BD4B1E66089"),
     licenses += ("Apache-2.0", url("http://apache.org/licenses/LICENSE-2.0")),
-    pomExtra := {
-      <url>https://github.com/davegurnell/checklist</url>
-      <scm>
-        <connection>scm:git:github.com/davegurnell/checklist</connection>
-        <developerConnection>scm:git:git@github.com:davegurnell/checklist</developerConnection>
-        <url>github.com/davegurnell/checklist</url>
-      </scm>
-      <developers>
-        <developer>
-          <id>davegurnell</id>
-          <name>Dave Gurnell</name>
-          <url>http://twitter.com/davegurnell</url>
-        </developer>
-      </developers>
-    }
+    homepage := Some(url("https://github.com/davegurnell/checklist")),
+    scmInfo := Some(ScmInfo(url("https://github.com/davegurnell/checklist.git"), "scm:git@github.com:davegurnell/checklist.git")),
+    developers := List(
+      Developer(
+        id = "davegurnell",
+        name = "Dave Gurnell",
+        email = "dave@underscore.io",
+        url = url("https://twitter.com/davegurnell")
+      )
+    )
   )
 
 def disableSonatypeSettings =
@@ -146,3 +145,7 @@ def disableSonatypeSettings =
     publishLocal := {},
     publish / skip := true
   )
+
+addCommandAlias("ci", ";clean ;coverage ;compile ;test ;coverageReport ;package")
+
+addCommandAlias("release", ";+publishSigned ;sonatypeBundleRelease")
